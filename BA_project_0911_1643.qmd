@@ -590,8 +590,17 @@ Unsurprisingly, female directors are better in passing Bechdel test.
 # Count Bechdel_binary values grouped by Gender
 counts <- df_unique %>%
   group_by(Gender, Bechdel_binary) %>%
-  summarise(count = n(), .groups = 'drop')
+  summarise(count = n(), .groups = 'drop') %>%
+  mutate(
+    Gender_desc = case_when(
+      Gender == 0 ~ "Female",
+      Gender == 1 ~ "Male",
+      Gender == 3 ~ "Unisex"
+    ),
+    Bechdel_binary_desc = ifelse(Bechdel_binary == 0, "Fail", "Pass")
+  ) %>%
+  select(Gender_desc, Bechdel_binary_desc, count)  # Select only the semantic columns
 
-# Display the results
+# Display the results with semantic descriptions on the left
 print(counts)
 ```
