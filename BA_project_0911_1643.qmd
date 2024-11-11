@@ -1,0 +1,597 @@
+---
+title: "BA project"
+format: html
+editor: visual
+---
+
+# **The Financial and Critical Impact of Female Representation in Films: A Study of Bechdel Test Outcomes**
+
+## Background and Motivation
+
+The Bechdel Test serves as a widely recognized measure of female representation in films, highlighting important discussions surrounding diversity and gender equality within the film industry. This topic is significant as it not only addresses the representation of women but also engages with broader societal issues such as gender stereotypes and equity.
+
+The intersection of cultural metrics, exemplified by the Bechdel Test, and economic variables, including a film's budget and revenue, renders this research particularly compelling. By exploring how diversity impacts a film's commercial and critical success, the study examines two key dimensions: cultural representation and its potential economic and critical consequences.
+
+This research aligns with the overarching goal of leveraging data-driven insights to comprehend the effects of cultural dynamics on creative industries. Through a combination of statistical, predictive, and exploratory analyses, the project aims to address questions of both social significance and commercial relevance.
+
+## Project Objectives
+
+### Main Objective
+
+The primary objective of this project is to investigate the relationship between the Bechdel Test and other film-related factors, such as budget, genre, and director, on a film's revenue. The specific aims include:
+
+-   Analyzing whether passing the Bechdel Test has a statistically significant effect on domestic gross or overall revenue.
+
+-   Assessing if films that pass the Bechdel Test tend to win more awards or achieve higher IMDb ratings.
+
+### Sub-goals
+
+1.  **Predictive Modeling:** Developing a predictive model to estimate a film's success based on various factors, including the Bechdel Test result, its correlation with awards, and IMDb ratings. This model will provide insights into the probability of a film passing the Bechdel Test based on attributes such as budget, genre, and director.
+
+2.  **Correlation Exploration:** Investigating correlations between a film's performance on the Bechdel Test and its revenue, as well as its awards and IMDb ratings, to uncover potential patterns and insights.
+
+3.  **Trend Visualization:** Visualizing trends between films that either pass or fail the Bechdel Test and their associated economic data, including revenues, budgets, awards won, and IMDb ratings. This visualization will help elucidate the relationship between female representation and film success.
+
+## Data Collection
+
+In this section, we outline the process of data collection and merging. The data sources for this project were obtained from data.world, where we can access to the following datasets:
+
+-   **Dataset df:** It contains information regarding the Bechdel test outcomes for various films. The information was gather from BechdelTest.com and The-Numbers.com
+
+-   **Dataset df2:** It includes additional film-related data, such as budget, revenue, genre, director, and awards. This information comes from the Imdb dataset.
+
+The two datasets were successfully merged into a single primary data frame using the IMDb ID as the key. This process resulted in a consolidated dataset comprising 1,792 rows. Specific columns of interest were selected to facilitate further analysis and ensure the relevance of the data to our research objectives.
+
+```{r}
+library(jsonlite)
+#install.packages("dplyr")  
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(tidyverse)
+library(RColorBrewer)
+library(ggplot2)
+
+```
+
+```{r}
+
+# Read json file
+df <- fromJSON("https://query.data.world/s/mel73qzc35dvjcs54h4x4tatmvveaj?dws=00000")
+
+# Read csv file
+df2 <- read.csv("https://query.data.world/s/zosxjqvjiygclw2wix74pcp4vyesvb?dws=00000", header=TRUE, stringsAsFactors=FALSE);
+
+#Merge the two dataset
+merged_data <- merge(df2, df, by.x = "imdb", by.y = "imdbID", all = FALSE)
+
+#Remove unwanted columns
+df_final <- subset(merged_data, select = -c(domgross_2013.,Writer,Year, Actors, imdb, title, test, clean_test, domgross, intgross, Plot, code, period.code,decade.code, budget, Rated, Response, Metascore, Released, Runtime, Type, Poster, Error ))
+```
+
+## CLEANING
+
+```{r}
+#Rename column
+
+df_final <- df_final %>% 
+  rename( Year = year, Bechdel_test_result = binary, Budget = budget_2013., Revenue = intgross_2013., Movie_Title = Title, Country_of_Origin = Country, Imdb_Rating = imdbRating, Imdb_Votes = imdbVotes)
+
+```
+
+```{r}
+# Seperate the language
+
+df_final <- df_final %>%
+  separate_rows(Language, sep = ", ")
+
+# Seperate the Genre
+df_final <- df_final %>%
+  separate_rows(Genre, sep = ", ")
+
+# Seperate the Director
+df_final <- df_final %>%
+  separate_rows(Director, sep = ", ")
+
+```
+
+For the awards column, we transformed the column into two separate columns, wins and nominations, containing only numerical values
+
+```{r}
+
+# Extract Wins and Nominations
+# Updated code to process each row individually
+df_final <- df_final %>%
+  rowwise() %>%
+  mutate(
+    # Extract numbers after "Won " and before "wins"
+    oscar_wins = replace_na(
+      str_extract(Awards, "(?i)(\\d+)(?= win(s)?)") %>%
+        str_replace_all("Another ", "") %>%
+        as.numeric(), 
+      0),
+    
+    # Extract numbers before "win(s)"
+    other_wins = replace_na(
+      str_extract(Awards, "(?i)\\bWon (\\d+)") %>%
+        str_replace_all("Won ", "") %>%
+        as.numeric(),
+      0),
+    
+    Wins = rowSums(across(c(oscar_wins, other_wins))),
+    
+    oscar_nominations = replace_na(
+      str_extract(Awards, "(?i)\\bNominated for (\\d+)") %>%
+        str_replace_all("Nominated for ", "") %>%
+        as.numeric(), 
+      0),
+    other_nominations = replace_na(
+      str_extract(Awards, "(?i)(\\d+)(?= nomination(s)?)") %>%
+        str_replace_all("Nominated ", "") %>%
+        as.numeric(),
+      0),
+    
+    Nominations = rowSums(across(c(oscar_nominations, other_nominations))),
+  ) %>%
+  select(-Awards, -oscar_wins, -other_wins, -oscar_nominations, -other_nominations) %>%  # Remove intermediate columns
+  ungroup() # Ungroup after rowwise operations
+
+```
+
+One of our hypothesis, is the gender of the director impact the result of the Bechdel test. Therefor, we extended our data set by using a third table. The table includes name and the associate gender. **We assume the name and gender are accurate, e.g James is a male name.** The values of the data are as follow:
+
+-   male = 1
+
+-   Female = 0
+
+-   Unisex = 3
+
+analysis, because only 101 observations out of the 1792 have a gender of either 3 (unisex) or NA we decided to ignore those when analyzing the impact of the gender of the director on any of the other variable.
+
+```{r}
+
+# Open the dataset with the names associated with a gender
+df_name <- read.csv("https://query.data.world/s/vosjabgwxpybit5vkwjkyv7przl6km?dws=00000", header=TRUE, stringsAsFactors=FALSE)
+df_name[df_name$name == "James",]
+
+df_name <- df_name %>% 
+  rename( Gender = gender)
+
+# Separate the column 'director' into 'Name' and 'Last_Name' at the first space
+df_final <- df_final %>%
+  separate(Director, into = c("Name", "Last_Name"), sep = " ", extra = "merge", fill = "right")
+
+#merge the two dataset and match the name of the director to a gender  
+df_final_gender <- left_join(df_final, df_name, by = c("Name" = "name"))
+df_final_gender <- df_final_gender %>%
+  select(-score)
+
+print(df_final_gender)
+
+
+```
+
+```{r}
+# Recreate a column with the directors name
+df_final_gender$Director_Name <- ifelse(
+  is.na(df_final_gender$Last_Name), 
+  df_final_gender$Name, 
+  paste(df_final_gender$Name, df_final$Last_Name)
+)
+
+df_final <- df_final_gender %>%
+  select(-Name, -Last_Name)
+
+
+```
+
+```{r}
+# Adding a column of Bechdel_test_result as binary
+df_final$Bechdel_binary <- as.factor(ifelse(df_final$Bechdel_test_result == "PASS", 1, 0))
+```
+
+Convert Revenue and IMDb Rating to numeric and creating the variable bechdel_pass
+
+```{r}
+
+
+# To make sure our EDA works we need to make sure the type of the variable is correct
+# Gender, Genre, language --> to categorical
+df_final[c ("Gender","Genre", "Language", "Country_of_Origin", "Bechdel_test_result", "Bechdel_binary")] <- lapply (df_final [c("Gender","Genre", "Language", "Country_of_Origin", "Bechdel_test_result", "Bechdel_binary")], as.factor)
+
+#Revenue, Imdb_Rating,Imdb_Votes :from character to numeric
+df_final$Imdb_Votes <- as.numeric(gsub(",", "", df_final$Imdb_Votes))
+df_final[c("Revenue", "Imdb_Rating", "Imdb_Votes")] <- lapply(df_final[c("Revenue", "Imdb_Rating", "Imdb_Votes")], as.numeric)
+
+# The types of variables our dataset has
+str(df_final)
+
+```
+
+```{r}
+na_counts <- colSums(is.na(df_final)) ## 32 NA in Revenue and 342 in Gender
+df_final <- na.omit(df_final)
+
+```
+
+## Exploratory Data Analysis
+
+This exploratory analysis aims to uncover relationships between female representation in films, as measured by the Bechdel test, and their commercial success as indicated by revenue and awards. By visualizing the data and assessing correlations among these variables, we can gain insights into the impact of diversity in film on its critical and financial performance.
+
+But first let's summarize key numerical aspects of our data:
+
+```{r}
+#Create a deduplicated dataset based on unique film titles. This dataset will be the one used when analysing the data in every column except for genre and language.
+df_unique <- df_final %>% 
+  group_by(Movie_Title) %>% 
+  summarise(across(everything(), ~ first(.)))
+
+summary_data <- df_unique %>%
+  summarise(across(everything(), ~ n_distinct(.)))
+
+print(summary_data)
+
+
+
+```
+
+```{r}
+# Sumerize the categorical columns
+columns_to_summarize <- c("Bechdel_test_result", "Genre", "Gender", "Bechdel_binary")
+category_counts <- lapply(columns_to_summarize, function(col) {
+  df_unique %>%
+    count(!!sym(col), name = "count") %>%
+    rename(Category = !!sym(col))
+})
+
+
+```
+
+```{r}
+# sumerize the numercial columns
+# Résumé des colonnes Budget, Revenu, Imdb_Rating, Imdb_Votes, Wins, Nominations
+summary(df_unique[, c("Budget", "Revenue", "Imdb_Rating", "Imdb_Votes", "Wins", "Nominations")])
+
+
+```
+
+### Correlation Heatmap Revenue, Budget, Imdb_Rating, Wins, Nominations Bechdel_binary
+
+```{r}
+# Calculate correlation matrix
+num_cols <- df_final %>% 
+  select(Revenue, Budget, Imdb_Rating, Wins, Nominations)
+corr_matrix <- cor(num_cols, use = "complete.obs")
+
+# Convert correlation matrix to long format using tidyr
+corr_long <- corr_matrix %>%
+  as.data.frame() %>%
+  mutate(Var1 = rownames(.)) %>%
+  pivot_longer(cols = -Var1,
+              names_to = "Var2",
+              values_to = "value")
+
+# Create the heatmap
+ggplot(corr_long, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                      midpoint = 0, limit = c(-1,1)) +
+  labs(title = "Correlation Heatmap",
+       fill = "Correlation") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Revenue Distribution by Bechdel Test Outcome
+
+```{r}
+# Create the plot with specified colors
+ggplot(df_unique, aes(x = factor(Bechdel_binary), y = log(Revenue), fill = factor(Bechdel_binary))) +
+  geom_violin(alpha = 0.7) +
+  geom_boxplot(width = 0.2, alpha = 0.8, outlier.shape = NA) +
+  scale_fill_manual(values = c("0" = "#FF6B6B", "1" = "#4ECDC4"), labels = c("Fail", "Pass")) +
+  scale_x_discrete(labels = c("0" = "Fail", "1" = "Pass")) +
+  labs(
+    title = "Movie Revenue Distribution by Bechdel Test Result",
+    subtitle = "Log of Revenue",
+    x = "Bechdel Test Result",
+    y = "Revenue",
+    fill = "Test Result"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    plot.subtitle = element_text(hjust = 0.5, size = 10),
+    legend.position = "bottom",
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12)
+  ) 
+
+
+```
+
+This visualization shows the distribution of movie revenues based on whether the movies passed or failed the Bechdel Test. The Bechdel Test is a measure of gender representation in media, where a "pass" typically indicates that a movie includes at least two women who talk to each other about something other than a man.
+
+### Insights and Observations
+
+-   **Revenue Comparison**: Interestingly, despite the cultural push for more inclusive storytelling, movies that fail the Bechdel Test still appear to have slightly higher median revenues.
+
+-   **Revenue Spread**: Both categories show a wide spread of revenues, but movies in the "Fail" category have a more elongated lower tail, suggesting a few very low-grossing movies in that group.
+
+-   **Implications**: This could hint at various dynamics in the industry, such as genre preferences, marketing budgets, or audience reach, influencing the revenue outcome regardless of gender representation.
+
+### Revenue Distribution by Genre and Bechdel Test Outcome
+
+```{r}
+ggplot(df_final, aes(x = Genre, y = Revenue, fill = factor(Bechdel_binary))) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_y_log10() +
+  labs(title = "Revenue Distribution by Genre and Bechdel Test Result",
+       x = "Genre", y = "Log of Revenue", fill = "Bechdel Test (0 = Fail, 1 = Pass)") +
+      scale_fill_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +
+  theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+**Insight**: Documentary genre films passing the Bechdel Test have lower income than those that fail it. Biography and Westem are similarly the same.
+
+for Romance, the opposite.
+
+### Revenue vs. IMDb Rating Scatter Plot with Bechdel Test Outcome
+
+```{r}
+ggplot(df_unique, aes(x = Imdb_Rating, y = Revenue, color = factor(Bechdel_binary))) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "loess", se = FALSE) +  # Add trend lines without confidence intervals
+  scale_y_log10() + 
+  scale_color_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +  # Set colors for Bechdel_binary
+  labs(title = "Revenue vs. IMDb Rating by Bechdel Test Result",
+       x = "IMDb Rating", y = "Log of Revenue", color = "Bechdel Test (0 = Fail, 1 = Pass)") +
+  theme_minimal()
+
+```
+
+Passing the Bechdel Test does not appear to have a major impact on revenue, as both passing and failing movies follow similar trends in terms of IMDb Rating and Revenue. Instead, IMDb rating itself seems to be the stronger indicator of revenue potential across both groups, though this effect is relatively modest
+
+### Wins by Bechdel Test Result
+
+```{r}
+# Using dplyr to create summary statistics
+summary_stats <- df_unique %>%
+  group_by(Bechdel_binary) %>%
+  summarise(
+    Mean_Wins = mean(Wins, na.rm = TRUE),
+    Median_Wins = median(Wins, na.rm = TRUE),
+    Count = n()
+  ) %>%
+  mutate(
+    Mean_Wins = round(Mean_Wins, 2),
+    Median_Wins = round(Median_Wins, 2)
+  )
+
+summary_stats
+```
+
+We see that failing the test is more common. The average number of win remains the same but the change is that 50% of films that passed the test had at least 4 awards and for those failing the test, 50% of them had at least 3 awards.
+
+```{r}
+ggplot(df_unique, aes(x = Bechdel_binary, y = Wins, fill = Bechdel_binary)) +
+  geom_boxplot(outlier.shape = NA) +
+  labs(title = "Awards by Bechdel Test Result",
+       x = "Bechdel Test Result", 
+       y = "Number of Awards",
+       fill = "Test Result") +
+      scale_fill_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylim(0,20) +  # Set y-axis limits to 0 and 45
+  # Add text annotation with statistics
+  annotate("text", 
+           x = 1:2, 
+           y = 45,  # Position the text at the top of the y-axis
+           label = paste("Mean:", round(tapply(df_final$Wins, df_final$Bechdel_binary, mean, na.rm = TRUE), 2),
+                         "\nMedian:", round(tapply(df_final$Wins, df_final$Bechdel_binary, median, na.rm = TRUE), 2)),
+           vjust = -0.5)
+
+
+```
+
+### IMDb Ratings by Bechdel Test Result
+
+```{r}
+# IMDb Ratings distribution
+ggplot(df_unique, aes(x = factor(Bechdel_binary), y = Imdb_Rating, fill = factor(Bechdel_binary))) +
+  geom_boxplot(outlier.shape = NA) +
+  labs(title = "IMDb Ratings by Bechdel Test Result",
+       x = "Bechdel Test Result (0 = Fail, 1 = Pass)", y = "IMDb Rating") +
+      scale_fill_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +
+  
+  theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
+```
+
+### Trend Analysis Over Time (Percentage of Movies Passing Bechdel Test)
+
+```{r}
+library(dplyr)
+# Calculate the percentage of movies passing the Bechdel test by year
+df_trend <- df_unique %>%
+  group_by(Year) %>%
+  summarize(pass_rate = mean(Bechdel_binary == 1, na.rm = TRUE) * 100)
+
+ggplot(df_trend, aes(x = Year, y = pass_rate)) +
+  geom_line(color = "blue") +
+  geom_point(color = "blue") +
+  labs(title = "Percentage of Movies Passing the Bechdel Test Over Time",
+       x = "Year", y = "Percentage Passing Bechdel Test") +
+  theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
+```
+
+## Gender of Director impact
+
+This part will explore how the gender of the director impact the data such as the budget, the revenue, the Imdb score, and the Bechedel test
+
+```{r}
+ggplot(
+  data = df_unique %>% filter(Gender %in% c(0, 1)),
+  mapping = aes(x = as.factor(Gender), fill = as.factor(Gender))
+) +
+  geom_bar(width = 0.5) +  # Set bar width here
+  labs(
+    x = "Director Gender (1 = Male, 0 = Female)",  # Label for x-axis
+    y = "Count",                                   # Label for y-axis
+    title = "Count of Films by Director Gender",
+    fill = "Gender"
+  ) +
+  scale_fill_manual(values = c("#DB9ADB", "#4062DB")) +  # Customize colors for each gender
+  ylim(0, 2000) +  # Set y-axis limit
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(size = 10),
+    axis.text.y = element_text(size = 10)
+  ) +
+  geom_text(
+    stat = "count",
+    aes(label = ..count..),  # Show count on top of each bar
+    vjust = -0.5,
+    position = position_dodge(width = 0.5)  # Aligns text to center of each bar width
+  )
+
+```
+
+```{r}
+# Director VS budget
+ggplot(
+  data = df_unique %>% filter(Gender %in% c(0, 1)),
+  mapping = aes(x = factor(Gender), y = log(Budget), fill = factor(Gender))
+) +
+  geom_boxplot(outlier.shape = NA) +  # Hide outliers if they clutter the plot
+  scale_fill_manual(values = c("0" = "#DB9ADB", "1" = "#4062DB")) +  # Color for male (0) and female (1)
+  labs(title = "Budget Distribution by Director Gender",
+       x = "Director Gender (1 = Male, 0 = Female)",
+       y = "Log of Budget",
+       fill = "Gender") +
+  theme_minimal()
+
+```
+
+**Gender vs Revenue**
+
+```{r}
+df_unique %>%
+  filter(Gender %in% c(0, 1)) %>%
+  group_by(Gender) %>%
+  summarize(
+    Mean_Revenue = mean(Revenue, na.rm = TRUE),
+    Median_Revenue = median(Revenue, na.rm = TRUE),
+    Count = n()
+  )
+```
+
+### Genre of movies
+
+```{r}
+# What genre pass the test, we use df_final because we look at the genre column
+df_pass <- df_final %>%
+  filter(Bechdel_binary == 1)
+
+data_genre <- df_pass %>%
+  group_by(Genre) %>%
+  summarize(count = n()) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+# Reorder Genre by percentage
+data_genre <- data_genre %>%
+  mutate(Genre = fct_reorder(Genre, percentage, .desc = TRUE))
+palette_21 <- c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854", 
+                "#ffd92f", "#e5c494", "#b3b3b3", "#1f78b4", "#33a02c", 
+                "#e31a1c", "#ff7f00", "#6a3d9a", "#b15928", "#a6cee3",
+                "#fb9a99", "#fdbf6f", "#cab2d6", "#ffff99", "#b2df8a", "#5A9BD5")
+# Plot with reordered genres
+ggplot(data_genre, aes(x = "", y = percentage, fill = Genre)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y") +
+  scale_fill_manual(values = palette_21) + 
+  labs(title = "Distribution of Genres Among Movies Passing the Bechdel Test",
+       fill = "Genre") +
+  theme_void() +
+  geom_text(aes(label = ifelse(percentage > 3, paste0(round(percentage, 1), "%"), "")),
+            position = position_stack(vjust = 0.5))
+
+```
+
+```{r}
+# What about the ones that fail
+df_fail <- df_final %>%
+  filter(Bechdel_binary == 0)
+
+data_genre <- df_fail %>%
+  group_by(Genre) %>%
+  summarize(count = n()) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+# Reorder Genre by percentage
+data_genre <- data_genre %>%
+  mutate(Genre = fct_reorder(Genre, percentage, .desc = TRUE))
+
+palette_22 <- c("#8DA0CB", "#E78AC3", "#66C2A5", "#FC8D62", "#FFD92F", 
+                "#A6D854", "#B3B3B3", "#E5C494", "#FF7F00", "#1F78B4", 
+                "#6A3D9A", "#E31A1C", "#33A02C", "#CAB2D6", "#FB9A99",
+                "#A6CEE3", "#B15928", "#B2DF8A", "#5A9BD5", "#FFFF99", "#FDBF6F")
+
+# Plot with reordered genres
+ggplot(data_genre, aes(x = "", y = percentage, fill = Genre)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y") +
+  scale_fill_manual(values = palette_22) + 
+  labs(title = "Distribution of Genres Among Movies failing the Bechdel Test",
+       fill = "Genre") +
+  theme_void() +
+  geom_text(aes(label = ifelse(percentage > 3, paste0(round(percentage, 1), "%"), "")),
+            position = position_stack(vjust = 0.5))
+```
+
+```{r}
+# Calculate counts and percentages by Gender and Bechdel Test result
+data_gender_bechdel <- df_unique %>%
+  filter(Gender %in% c(0, 1)) %>%
+  group_by(Gender, Bechdel_binary) %>%
+  summarize(count = n()) %>%
+  group_by(Gender) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+# Plot
+ggplot(data_gender_bechdel, aes(x = as.factor(Gender), y = count, fill = as.factor(Bechdel_binary))) +
+  geom_bar(stat = "identity", width = 0.5, position = "fill") +  # Use position = "fill" for percentage stack
+  labs(
+    x = "Director Gender (0 = Female, 1 = Male)",  # Label for x-axis
+    y = "Percentage of Movies",                    # Label for y-axis
+    title = "Percentage of Films Passing the Bechdel Test by Director Gender",
+    fill = "Bechdel Test Result\n(0 = Fail, 1 = Pass)"
+  ) +
+  scale_fill_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +  # Customize colors for pass/fail
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(size = 10),
+    axis.text.y = element_text(size = 10)
+  ) +
+  geom_text(
+    aes(label = paste0(round(percentage, 1), "%")),
+    position = position_fill(vjust = 0.5),  # Center text within each stack
+    color = "white",
+    size = 3
+  )
+
+```
+
+Unsurprisingly, female directors are better in passing Bechdel test.
+
+```{r}
+# Count Bechdel_binary values grouped by Gender
+counts <- df_unique %>%
+  group_by(Gender, Bechdel_binary) %>%
+  summarise(count = n(), .groups = 'drop')
+
+# Display the results
+print(counts)
+```
