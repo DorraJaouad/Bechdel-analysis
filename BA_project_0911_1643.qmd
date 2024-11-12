@@ -42,7 +42,7 @@ In this section, we outline the process of data collection and merging. The data
 
 The two datasets were successfully merged into a single primary data frame using the IMDb ID as the key. This process resulted in a consolidated dataset comprising 1,792 rows. Specific columns of interest were selected to facilitate further analysis and ensure the relevance of the data to our research objectives.
 
-```{r}
+```{r,echo=FALSE, warning=FALSE}
 library(jsonlite)
 #install.packages("dplyr")  
 library(dplyr)
@@ -192,7 +192,7 @@ df_final$Bechdel_binary <- as.factor(ifelse(df_final$Bechdel_test_result == "PAS
 
 Convert Revenue and IMDb Rating to numeric and creating the variable bechdel_pass
 
-```{r}
+```{r, warning=FALSE}
 
 
 # To make sure our EDA works we need to make sure the type of the variable is correct
@@ -258,6 +258,10 @@ summary(df_unique[, c("Budget", "Revenue", "Imdb_Rating", "Imdb_Votes", "Wins", 
 ### Correlation Heatmap Revenue, Budget, Imdb_Rating, Wins, Nominations Bechdel_binary
 
 ```{r}
+library(tidyr)
+library(ggplot2)
+library(plotly)
+
 # Calculate correlation matrix
 num_cols <- df_final %>% 
   select(Revenue, Budget, Imdb_Rating, Wins, Nominations)
@@ -271,8 +275,8 @@ corr_long <- corr_matrix %>%
               names_to = "Var2",
               values_to = "value")
 
-# Create the heatmap
-ggplot(corr_long, aes(x = Var1, y = Var2, fill = value)) +
+# Create the interactive heatmap
+heatmap <- ggplot(corr_long, aes(x = Var1, y = Var2, fill = value)) +
   geom_tile(color = "white") +
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
                       midpoint = 0, limit = c(-1,1)) +
@@ -280,13 +284,19 @@ ggplot(corr_long, aes(x = Var1, y = Var2, fill = value)) +
        fill = "Correlation") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplotly(heatmap)
 ```
 
 ### Revenue Distribution by Bechdel Test Outcome
 
 ```{r}
-# Create the plot with specified colors
-ggplot(df_unique, aes(x = factor(Bechdel_binary), y = log(Revenue), fill = factor(Bechdel_binary))) +
+library(tidyr)
+library(ggplot2)
+library(plotly)
+
+# Create the interactive plot with specified colors
+plot <- ggplot(df_unique, aes(x = factor(Bechdel_binary), y = log(Revenue), fill = factor(Bechdel_binary))) +
   geom_violin(alpha = 0.7) +
   geom_boxplot(width = 0.2, alpha = 0.8, outlier.shape = NA) +
   scale_fill_manual(values = c("0" = "#FF6B6B", "1" = "#4ECDC4"), labels = c("Fail", "Pass")) +
@@ -305,9 +315,9 @@ ggplot(df_unique, aes(x = factor(Bechdel_binary), y = log(Revenue), fill = facto
     legend.position = "bottom",
     axis.text = element_text(size = 10),
     axis.title = element_text(size = 12)
-  ) 
+  )
 
-
+ggplotly(plot)
 ```
 
 This visualization shows the distribution of movie revenues based on whether the movies passed or failed the Bechdel Test. The Bechdel Test is a measure of gender representation in media, where a "pass" typically indicates that a movie includes at least two women who talk to each other about something other than a man.
@@ -323,13 +333,21 @@ This visualization shows the distribution of movie revenues based on whether the
 ### Revenue Distribution by Genre and Bechdel Test Outcome
 
 ```{r}
-ggplot(df_final, aes(x = Genre, y = Revenue, fill = factor(Bechdel_binary))) +
+library(tidyr)
+library(ggplot2)
+library(plotly)
+
+# Create the interactive plot
+plot <- ggplot(df_final, aes(x = Genre, y = Revenue, fill = factor(Bechdel_binary))) +
   geom_boxplot(outlier.shape = NA) +
   scale_y_log10() +
   labs(title = "Revenue Distribution by Genre and Bechdel Test Result",
        x = "Genre", y = "Log of Revenue", fill = "Bechdel Test (0 = Fail, 1 = Pass)") +
-      scale_fill_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +
-  theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  scale_fill_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplotly(plot)
 ```
 
 **Insight**: Documentary genre films passing the Bechdel Test have lower income than those that fail it. Biography and Westem are similarly the same.
@@ -339,7 +357,12 @@ for Romance, the opposite.
 ### Revenue vs. IMDb Rating Scatter Plot with Bechdel Test Outcome
 
 ```{r}
-ggplot(df_unique, aes(x = Imdb_Rating, y = Revenue, color = factor(Bechdel_binary))) +
+# Load necessary libraries
+library(ggplot2)
+library(plotly)
+
+# Your ggplot code
+p <- ggplot(df_unique, aes(x = Imdb_Rating, y = Revenue, color = factor(Bechdel_binary))) +
   geom_point(alpha = 0.6) +
   geom_smooth(method = "loess", se = FALSE) +  # Add trend lines without confidence intervals
   scale_y_log10() + 
@@ -347,6 +370,10 @@ ggplot(df_unique, aes(x = Imdb_Rating, y = Revenue, color = factor(Bechdel_binar
   labs(title = "Revenue vs. IMDb Rating by Bechdel Test Result",
        x = "IMDb Rating", y = "Log of Revenue", color = "Bechdel Test (0 = Fail, 1 = Pass)") +
   theme_minimal()
+
+ggplotly(p)
+
+
 
 ```
 
