@@ -257,7 +257,7 @@ summary(df_unique[, c("Budget", "Revenue", "Imdb_Rating", "Imdb_Votes", "Wins", 
 
 ### Correlation Heatmap Revenue, Budget, Imdb_Rating, Wins, Nominations Bechdel_binary
 
-```{r}
+```{r, warning=FALSE, echo=FALSE}
 library(tidyr)
 library(ggplot2)
 library(plotly)
@@ -290,7 +290,7 @@ ggplotly(heatmap)
 
 ### Revenue Distribution by Bechdel Test Outcome
 
-```{r}
+```{r, warning=FALSE, echo=FALSE}
 library(tidyr)
 library(ggplot2)
 library(plotly)
@@ -332,7 +332,7 @@ This visualization shows the distribution of movie revenues based on whether the
 
 ### Revenue Distribution by Genre and Bechdel Test Outcome
 
-```{r}
+```{r, warning=FALSE, echo=FALSE}
 library(tidyr)
 library(ggplot2)
 library(plotly)
@@ -356,7 +356,7 @@ for Romance, the opposite.
 
 ### Revenue vs. IMDb Rating Scatter Plot with Bechdel Test Outcome
 
-```{r}
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
 # Load necessary libraries
 library(ggplot2)
 library(plotly)
@@ -381,7 +381,7 @@ Passing the Bechdel Test does not appear to have a major impact on revenue, as b
 
 ### Wins by Bechdel Test Result
 
-```{r}
+```{r, warning=FALSE, echo=FALSE}
 # Using dplyr to create summary statistics
 summary_stats <- df_unique %>%
   group_by(Bechdel_binary) %>%
@@ -400,14 +400,19 @@ summary_stats
 
 We see that failing the test is more common. The average number of win remains the same but the change is that 50% of films that passed the test had at least 4 awards and for those failing the test, 50% of them had at least 3 awards.
 
-```{r}
-ggplot(df_unique, aes(x = Bechdel_binary, y = Wins, fill = Bechdel_binary)) +
+```{r, warning=FALSE, echo=FALSE}
+library(tidyr)
+library(ggplot2)
+library(plotly)
+
+# Create the interactive plot
+plot <- ggplot(df_unique, aes(x = Bechdel_binary, y = Wins, fill = Bechdel_binary)) +
   geom_boxplot(outlier.shape = NA) +
   labs(title = "Awards by Bechdel Test Result",
        x = "Bechdel Test Result", 
        y = "Number of Awards",
-       fill = "Test Result") +
-      scale_fill_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +
+       fill = "Bechdel Test (0 = Fail, 1 = Pass)") +
+  scale_fill_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5)) +
   ylim(0,20) +  # Set y-axis limits to 0 and 45
@@ -419,37 +424,51 @@ ggplot(df_unique, aes(x = Bechdel_binary, y = Wins, fill = Bechdel_binary)) +
                          "\nMedian:", round(tapply(df_final$Wins, df_final$Bechdel_binary, median, na.rm = TRUE), 2)),
            vjust = -0.5)
 
+ggplotly(plot)
 
 ```
 
 ### IMDb Ratings by Bechdel Test Result
 
-```{r}
-# IMDb Ratings distribution
-ggplot(df_unique, aes(x = factor(Bechdel_binary), y = Imdb_Rating, fill = factor(Bechdel_binary))) +
+```{r, warning=FALSE, echo=FALSE}
+library(tidyr)
+library(ggplot2)
+library(plotly)
+
+# Create the interactive plot
+plot <- ggplot(df_unique, aes(x = factor(Bechdel_binary), y = Imdb_Rating, fill = factor(Bechdel_binary))) +
   geom_boxplot(outlier.shape = NA) +
   labs(title = "IMDb Ratings by Bechdel Test Result",
        x = "Bechdel Test Result (0 = Fail, 1 = Pass)", y = "IMDb Rating") +
-      scale_fill_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +
-  
-  theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
+  scale_fill_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplotly(plot)
 ```
 
 ### Trend Analysis Over Time (Percentage of Movies Passing Bechdel Test)
 
-```{r}
+```{r, warning=FALSE, echo=FALSE}
 library(dplyr)
+library(ggplot2)
+library(plotly)
+
 # Calculate the percentage of movies passing the Bechdel test by year
 df_trend <- df_unique %>%
   group_by(Year) %>%
   summarize(pass_rate = mean(Bechdel_binary == 1, na.rm = TRUE) * 100)
 
-ggplot(df_trend, aes(x = Year, y = pass_rate)) +
+# Create the interactive plot
+plot <- ggplot(df_trend, aes(x = Year, y = pass_rate)) +
   geom_line(color = "blue") +
   geom_point(color = "blue") +
   labs(title = "Percentage of Movies Passing the Bechdel Test Over Time",
        x = "Year", y = "Percentage Passing Bechdel Test") +
-  theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplotly(plot)
 ```
 
 ## Gender of Director impact
