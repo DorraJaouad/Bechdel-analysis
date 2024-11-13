@@ -187,12 +187,12 @@ df_final_gender <- df_final %>%
   left_join(df_name, by = c("Name" = "name")) %>%
   select(-score)  # Remove unnecessary column
 
-# Crear la tabla interactiva
+# Create the interactive table
 datatable(df_final_gender, 
-          options = list(pageLength = 10,  # Número de filas que se muestran por página
-                         autoWidth = TRUE, # Ajuste automático del ancho de las columnas
-                         searchHighlight = TRUE), # Resaltar texto de búsqueda
-          filter = 'top')  # Agrega un filtro de búsqueda en la parte superior de la tabla
+          options = list(pageLength = 10,  # Number of rows 
+                         autoWidth = TRUE, 
+                         searchHighlight = TRUE),
+          filter = 'top')  # add search filter to the top
 
 ```
 
@@ -250,66 +250,63 @@ df_final <- na.omit(df_final)
 
 9.  **Variables and Descriptions after the cleaning**
 
-```{=html}
-<!-- -->
-```
-1.  **Year (Release Date)**\
+-   **Year (Release Date)**\
     • **Description**: The year when the film was released to the public.\
     • **Type**: Integer.
 
-2.  **Bechdel Test Result (Passed/Failed)**\
+-   **Bechdel Test Result (Passed/Failed)**\
     • **Description**: This variable indicates whether the film passed or failed the Bechdel test, a measure of gender representation in films.\
     • **Type**: Categorical/factor with possible values "Passed" or "Failed."
 
-3.  **Budget (in \$)**\
+-   **Budget (in \$)**\
     • **Description**: The production budget of the film in U.S. dollars, adjusted for inflation to reflect 2013 dollar values.\
     • **Type**: Numeric, stored as an integer.
 
-4.  **Revenue (in \$)**\
+-   **Revenue (in \$)**\
     • **Description**: The total revenue or box office earnings of the film in U.S. dollars, adjusted for inflation to 2013 prices.\
     • **Type**: Numeric.
 
-5.  **Language**\
+-   **Language**\
     • **Description**: The primary language(s) in which the film was released or broadcast, represented by specific languages such as "English" or "French."\
     • **Type**: Categorical/factor.
 
-6.  **Movie Title**\
+-   **Movie Title**\
     • **Description**: The name of the film, provided as text.\
     • **Type**: Text (Character).
 
-7.  **Country of Origin**\
+-   **Country of Origin**\
     • **Description**: The country where the film was produced or primarily distributed, provided as the country’s name (e.g., "USA", "France").\
     • **Type**: Categorical/factor.
 
-8.  **IMDb Ratings**\
+-   **IMDb Ratings**\
     • **Description**: The film’s IMDb rating, often based on user reviews and ratings on the IMDb platform.\
     • **Type**: Numeric.
 
-9.  **Genre (Action, Drama, Comedy, etc.)**\
+-   **Genre (Action, Drama, Comedy, etc.)**\
     • **Description**: The primary genre(s) describing the film, such as Action, Drama, or Comedy.\
     • **Type**: Categorical/factor.
 
-10. **IMDb Votes**\
+-   **IMDb Votes**\
     • **Description**: The number of user reviews for the film’s IMDb rating on the IMDb platform.\
     • **Type**: Numeric.
 
-11. **Wins**\
+-   **Wins**\
     • **Description**: The number of awards the film has won (e.g., "Golden Globe", "Oscar").\
     • **Type**: Numeric.
 
-12. **Nominations**\
+-   **Nominations**\
     • **Description**: The number of nominations for awards the film has received.\
     • **Type**: Numeric.
 
-13. **Gender (Director’s Gender)**\
+-   **Gender (Director’s Gender)**\
     • **Description**: The gender of the film's director.\
     • **Type**: Categorical/factor.
 
-14. **Director Name**\
+-   **Director Name**\
     • **Description**: The name of the director of the film.\
     • **Type**: Text (Character).
 
-15. **Bechdel Binary**\
+-   **Bechdel Binary**\
     • **Description**: This variable indicates whether the film passed (1) or failed (0) the Bechdel test.\
     • **Type**: Categorical/factor with possible values "Passed = 1" or "Failed = 0."
 
