@@ -37,11 +37,11 @@ The primary objective of this project is to investigate the relationship between
 
 ## Research Questions
 
-In this section, we pose the following research questions to explore the potential influence of female representation in films on commercial and critical success. By examining correlations between Bechdel Test results and metrics like revenue, awards, and IMDb ratings, we aim to identify patterns that link gender diversity with performance outcomes. Additionally, we explore predictive models to assess whether factors such as budget, genre, and director can reliably estimate both a film’s success and its likelihood of passing the Bechdel Test. These questions guide our analysis to uncover data-driven insights into the economic and critical impact of gender representation in the film industry.
+In this section, we pose the following research questions to explore the potential influence of female representation in films on commercial and critical success. By examining correlations between Bechdel Test results and metrics like revenue, awards, and IMDb ratings, we aim to identify patterns that link gender diversity with performance outcomes. Additionally, we explore predictive models to assess whether factors such as budget, genre, and director can reliably estimate both a film's success and its likelihood of passing the Bechdel Test. These questions guide our analysis to uncover data-driven insights into the economic and critical impact of gender representation in the film industry.
 
 1.  Is there a significant correlation between passing the Bechdel test and a film's revenue?
 2.  Do films that pass the Bechdel test tend to win more awards or receive higher IMDb ratings? 
-3.  Can we build a predictive model to estimate a film’s success (revenue, awards, IMDb ratings) based on the Bechdel test results and other factors like budget, genre, and director?
+3.  Can we build a predictive model to estimate a film's success (revenue, awards, IMDb ratings) based on the Bechdel test results and other factors like budget, genre, and director?
 4.  Can we develop a predictive model to determine whether a film will pass the Bechdel test based on factors such as budget, genre, and director?
 
 ## Data Collection
@@ -62,7 +62,7 @@ library(stringr)
 library(tidyverse)
 library(RColorBrewer)
 library(ggplot2)
-
+library(plotly)
 ```
 
 ```{r}
@@ -158,7 +158,7 @@ df_final <- df_final %>%
 
 4.  **Integrating Director Gender for Analysis**
 
-    To explore the potential impact of a director's gender on a film’s performance in the Bechdel Test, we extended our dataset by merging it with an external table that maps names to gender. This table associates names with specific genders, where:
+    To explore the potential impact of a director's gender on a film's performance in the Bechdel Test, we extended our dataset by merging it with an external table that maps names to gender. This table associates names with specific genders, where:
 
     -   male = 1
 
@@ -166,7 +166,7 @@ df_final <- df_final %>%
 
     -   Unisex = 3
 
-    For the purposes of our analysis, we assume these name-gender associations are accurate (e.g., "James" is classified as male). Given that only 101 out of 1,792 records are marked as unisex or have missing gender values, we decided to exclude these records when examining gender’s impact on other variables.
+    For the purposes of our analysis, we assume these name-gender associations are accurate (e.g., "James" is classified as male). Given that only 101 out of 1,792 records are marked as unisex or have missing gender values, we decided to exclude these records when examining gender's impact on other variables.
 
 ```{r}
 # Open the dataset with the names associated with a gender
