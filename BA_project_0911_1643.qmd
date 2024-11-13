@@ -1,6 +1,9 @@
 ---
 title: "BA project"
-format: html
+format:
+  html:
+    code-fold: true
+    code-summary: "Show the code"
 editor: visual
 ---
 
@@ -52,9 +55,6 @@ In this section, we outline the process of data collection and merging. The data
 The two datasets were successfully merged into a single primary data frame using the IMDb ID as the key. This process resulted in a consolidated dataset comprising 1,792 rows. Specific columns of interest were selected to facilitate further analysis and ensure the relevance of the data to our research objectives.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
-
 library(jsonlite)
 library(dplyr)
 library(tidyr)
@@ -66,8 +66,6 @@ library(ggplot2)
 ```
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 # Read json file
 df <- fromJSON("https://query.data.world/s/mel73qzc35dvjcs54h4x4tatmvveaj?dws=00000")
 
@@ -89,8 +87,6 @@ In the data cleaning section, we ensure the dataset is prepared for effective an
     This section focuses on renaming columns to create a consistent and clear naming convention across the dataset, ensuring easier readability and usability for analysis.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 #Rename column
 
 df_final <- df_final %>% 
@@ -102,8 +98,6 @@ df_final <- df_final %>%
     Here, we separated entries with multiple values in the *Language*, *Genre*, and *Director* columns, creating distinct rows for each value. This transformation enables more granular analysis by ensuring each entry corresponds to a single language, genre, or director.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 # Seperate the language
 
 df_final <- df_final %>%
@@ -123,9 +117,6 @@ df_final <- df_final %>%
     In this section, we parsed the *Awards* column to isolate and categorize Oscar and other award wins and nominations. By extracting relevant numerical values, we created separate columns for *Wins* and *Nominations*, enabling a more detailed analysis of award performance. Intermediate columns were removed to streamline the dataset.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
-
 # Extract Wins and Nominations
 # Updated code to process each row individually
 df_final <- df_final %>%
@@ -178,8 +169,6 @@ df_final <- df_final %>%
     For the purposes of our analysis, we assume these name-gender associations are accurate (e.g., "James" is classified as male). Given that only 101 out of 1,792 records are marked as unisex or have missing gender values, we decided to exclude these records when examining gender’s impact on other variables.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 # Open the dataset with the names associated with a gender
 df_name <- read.csv("https://query.data.world/s/vosjabgwxpybit5vkwjkyv7przl6km?dws=00000", header=TRUE, stringsAsFactors=FALSE)
 df_name[df_name$name == "James",]
@@ -205,8 +194,6 @@ print(df_final_gender)
     In this step, we recreate a column that combines the director's first and last name. If the last name is missing, we use only the first name; otherwise, both names are concatenated. This provides a consistent format for the director's name across the dataset, which we store in the new column *Director_Name*. We then remove the *Name* and *Last_Name* columns to streamline the dataset.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 # Recreate a column with the directors name
 df_final_gender$Director_Name <- ifelse(
   is.na(df_final_gender$Last_Name), 
@@ -224,8 +211,6 @@ df_final <- df_final_gender %>%
     We create a binary column, *Bechdel_binary*, to indicate whether each film passed the Bechdel Test, where a "PASS" result is represented as **`1`** and a "FAIL" result as **`0`**. This binary format allows for easier analysis and statistical modeling.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 # Adding a column of Bechdel_test_result as binary
 df_final$Bechdel_binary <- as.factor(ifelse(df_final$Bechdel_test_result == "PASS", 1, 0))
 ```
@@ -234,9 +219,6 @@ df_final$Bechdel_binary <- as.factor(ifelse(df_final$Bechdel_test_result == "PAS
     To prepare for exploratory data analysis, we set appropriate data types for each variable. *Gender*, *Genre*, *Language*, *Country_of_Origin*, *Bechdel_test_result*, and *Bechdel_binary* are converted to categorical variables, while *Revenue*, *Imdb_Rating*, and *Imdb_Votes* are transformed to numeric types for accurate calculations.
 
 ```{r}
-
-#| code-fold:true
-#| code-summary: "Click to show code"
 # To make sure our EDA works we need to make sure the type of the variable is correct
 # Gender, Genre, language --> to categorical
 df_final[c ("Gender","Genre", "Language", "Country_of_Origin", "Bechdel_test_result", "Bechdel_binary")] <- lapply (df_final [c("Gender","Genre", "Language", "Country_of_Origin", "Bechdel_test_result", "Bechdel_binary")], as.factor)
@@ -254,8 +236,6 @@ str(df_final)
     After checking for missing values, we find that *Revenue* and *Gender* have some `NA` entries. Since these missing values could impact analysis, we remove rows with any `NA` values to maintain data integrity in the final dataset.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 na_counts <- colSums(is.na(df_final)) ## 32 NA in Revenue and 342 in Gender
 df_final <- na.omit(df_final)
 
@@ -269,8 +249,6 @@ This exploratory analysis aims to uncover relationships between female represent
     In this step, we create a deduplicated dataset based on unique film titles. This dataset will be used for analysis in all columns except for *Genre* and *Language*. By grouping the data by *Movie_Title* and selecting the first occurrence of each variable, we ensure that only one entry per film is considered for analysis. We then summarize the dataset to count the number of distinct values in each column, providing an overview of the diversity within the data.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 library(DT)
 # Create a deduplicated dataset based on unique film titles
 df_unique <- df_final %>% 
@@ -296,8 +274,6 @@ summary_data_table
     In this step, we summarize the categorical variables, including *Bechdel_test_result*, *Genre*, *Gender*, and *Bechdel_binary*, by counting the occurrences of each unique category. This provides an overview of the distribution of these variables in the dataset, which is essential for understanding their role in the analysis.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 #install.packages("DT")
 library(DT)
 # Summarize the Bechdel test result, Genre, and Gender with counts
@@ -331,8 +307,6 @@ gender_summary_table
     In this step, we summarize the key numerical columns, including *Budget*, *Revenue*, *Imdb_Rating*, *Imdb_Votes*, *Wins*, and *Nominations*. This summary provides descriptive statistics for these variables, offering insights into their distribution and range, which are essential for understanding their role in the analysis of film performance.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 library(DT)
 
@@ -349,13 +323,11 @@ numerical_summary_table <- datatable(numerical_summary_df, options = list(pageLe
 numerical_summary_table
 ```
 
-### Correlation Heatmap: Revenue, Budget, Imdb_Rating, Wins, Nominations 
+### Correlation Heatmap: Revenue, Budget, Imdb_Rating, Wins, Nominations
 
 In this step, we present a correlation heatmap that displays the relationships between key variables: **Revenue**, **Budget**, **IMDb Rating**, **Wins**, and **Nominations**. By examining the correlation coefficients between these variables, this heatmap provides insights into the degree and direction of association among financial, critical, and award-related metrics. Positive correlations indicate that as one variable increases, the other tends to increase as well, while negative correlations suggest an inverse relationship. This visualization serves as a preliminary analysis, helping us identify which factors are most closely linked, and providing a basis for further exploration of the economic and critical impacts of female representation in films.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 library(plotly)
 
@@ -415,8 +387,6 @@ ggplotly(heatmap)
 In this step, we examine the distribution of movie revenues based on whether films pass or fail the Bechdel Test. Using a violin plot overlaid with boxplots, we visualize the log-transformed revenue to handle any large variances in revenue data, which allows us to better observe patterns across Bechdel Test outcomes. This visualization helps us assess whether movies that pass the Bechdel Test tend to have different revenue distributions compared to those that fail, providing preliminary insights into the financial impact of female representation in films.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 library(plotly)
 
@@ -460,8 +430,6 @@ Overall, this suggests that films failing the Bechdel Test may achieve higher re
 In this section we use a boxplot that compares film revenues across different genres, with results segmented by whether the films pass or fail the Bechdel Test.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 library(plotly)
 
@@ -500,8 +468,6 @@ The plot suggests that while revenue varies significantly across genres, the Bec
 This scatter plot visualization provides insight into the relationship between a film's IMDb rating and its revenue, while highlighting the results of the Bechdel Test as a key variable. It aims to observe any trends in rating and revenue associated with gender representation. A smooth trend line added to the data helps to highlight overarching patterns, while a logarithmic scale on the revenue axis accounts for the large revenue disparities often found across films.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 # Load necessary libraries
 library(ggplot2)
@@ -519,8 +485,6 @@ p <- ggplot(df_unique, aes(x = Imdb_Rating, y = Revenue, color = factor(Bechdel_
 
 ggplotly(p)
 
-
-
 ```
 
 Passing the Bechdel Test does not appear to have a major impact on revenue, as both passing and failing movies follow similar trends in terms of IMDb Rating and Revenue. Instead, IMDb rating itself seems to be the stronger indicator of revenue potential across both groups, though this effect is relatively modest
@@ -528,8 +492,6 @@ Passing the Bechdel Test does not appear to have a major impact on revenue, as b
 ### Wins by Bechdel Test Result
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 # Using dplyr to create summary statistics
 summary_stats <- df_unique %>%
@@ -550,8 +512,6 @@ summary_stats
 We see that failing the test is more common. The average number of win remains the same but the change is that 50% of films that passed the test had at least 4 awards and for those failing the test, 50% of them had at least 3 awards.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 library(plotly)
 
@@ -581,8 +541,6 @@ ggplotly(plot)
 ### IMDb Ratings by Bechdel Test Result
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 library(tidyr)
 library(ggplot2)
@@ -603,8 +561,6 @@ ggplotly(plot)
 ### Trend Analysis Over Time (Percentage of Movies Passing Bechdel Test)
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 library(dplyr)
 library(ggplot2)
@@ -632,8 +588,6 @@ ggplotly(plot)
 This part will explore how the gender of the director impact the data such as the budget, the revenue, the Imdb score, and the Bechedel test
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 ggplot(
   data = df_unique %>% filter(Gender %in% c(0, 1)),
@@ -682,8 +636,6 @@ ggplot(
 **Gender vs Revenue**
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 df_unique %>%
   filter(Gender %in% c(0, 1)) %>%
@@ -698,8 +650,6 @@ df_unique %>%
 ### Genre of movies
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 # What genre pass the test, we use df_final because we look at the genre column
 df_pass <- df_final %>%
@@ -731,8 +681,6 @@ ggplot(data_genre, aes(x = "", y = percentage, fill = Genre)) +
 ```
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 # What about the ones that fail
 df_fail <- df_final %>%
@@ -765,8 +713,6 @@ ggplot(data_genre, aes(x = "", y = percentage, fill = Genre)) +
 ```
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 # Calculate counts and percentages by Gender and Bechdel Test result
 data_gender_bechdel <- df_unique %>%
@@ -804,8 +750,6 @@ ggplot(data_gender_bechdel, aes(x = as.factor(Gender), y = count, fill = as.fact
 Unsurprisingly, female directors are better in passing Bechdel test.
 
 ```{r}
-#| code-fold:true
-#| code-summary: "Click to show code"
 
 # Count Bechdel_binary values grouped by Gender
 counts <- df_unique %>%
