@@ -171,10 +171,10 @@ df_final <- df_final %>%
 
     For the purposes of our analysis, we assume these name-gender associations are accurate (e.g., "James" is classified as male). Given that only 101 out of 1,792 records are marked as unisex or have missing gender values, we decided to exclude these records when examining gender's impact on other variables.
 
-```{r}
+```{r,echo=FALSE, warning=FALSE}
 # Open the dataset with the names associated with a gender
 df_name <- read.csv("https://query.data.world/s/vosjabgwxpybit5vkwjkyv7przl6km?dws=00000", header=TRUE, stringsAsFactors=FALSE)
-df_name[df_name$name == "James",]
+# df_name[df_name$name == "James",]
 
 df_name <- df_name %>% 
   rename( Gender = gender)
@@ -221,7 +221,7 @@ df_final$Bechdel_binary <- as.factor(ifelse(df_final$Bechdel_test_result == "PAS
 7.  **Ensuring Correct Variable Types for Exploratory Data Analysis**\
     To prepare for exploratory data analysis, we set appropriate data types for each variable. *Gender*, *Genre*, *Language*, *Country_of_Origin*, *Bechdel_test_result*, and *Bechdel_binary* are converted to categorical variables, while *Revenue*, *Imdb_Rating*, and *Imdb_Votes* are transformed to numeric types for accurate calculations.
 
-```{r}
+```{r,echo=FALSE, warning=FALSE}
 # To make sure our EDA works we need to make sure the type of the variable is correct
 # Gender, Genre, language --> to categorical
 df_final[c ("Gender","Genre", "Language", "Country_of_Origin", "Bechdel_test_result", "Bechdel_binary")] <- lapply (df_final [c("Gender","Genre", "Language", "Country_of_Origin", "Bechdel_test_result", "Bechdel_binary")], as.factor)
@@ -231,7 +231,7 @@ df_final$Imdb_Votes <- as.numeric(gsub(",", "", df_final$Imdb_Votes))
 df_final[c("Revenue", "Imdb_Rating", "Imdb_Votes")] <- lapply(df_final[c("Revenue", "Imdb_Rating", "Imdb_Votes")], as.numeric)
 
 # The types of variables our dataset has
-str(df_final)
+#str(df_final)
 
 ```
 
@@ -500,7 +500,7 @@ summary_stats
 
 We see that failing the test is more common. The average number of win remains the same but the change is that 50% of films that passed the test had at least 4 awards and for those failing the test, 50% of them had at least 3 awards.
 
-```{r}
+```{r,echo=FALSE, warning=FALSE}
 # Create the interactive plot
 plot <- ggplot(df_unique, aes(x = Bechdel_binary, y = Wins, fill = Bechdel_binary)) +
   geom_boxplot(outlier.shape = NA) +
@@ -539,28 +539,7 @@ plot <- ggplot(df_unique, aes(x = factor(Bechdel_binary), y = Imdb_Rating, fill 
 ggplotly(plot)
 ```
 
-### Trend Analysis Over Time (Percentage of Movies Passing Bechdel Test)
-
-```{r}
-
-# Calculate the percentage of movies passing the Bechdel test by year
-df_trend <- df_unique %>%
-  group_by(Year) %>%
-  summarize(pass_rate = mean(Bechdel_binary == 1, na.rm = TRUE) * 100)
-
-# Create the interactive plot
-plot <- ggplot(df_trend, aes(x = Year, y = pass_rate)) +
-  geom_line(color = "blue") +
-  geom_point(color = "blue") +
-  labs(title = "Percentage of Movies Passing the Bechdel Test Over Time",
-       x = "Year", y = "Percentage Passing Bechdel Test") +
-  theme_minimal() + 
-  theme(plot.title = element_text(hjust = 0.5))
-
-ggplotly(plot)
-```
-
-## Director's gender impact
+### Director's gender impact
 
 This section will examine how the director's gender influences various aspects of the data, including budget, revenue, IMDb score, and the Bechdel test results.
 
@@ -869,4 +848,25 @@ In contrast, for movies directed by men, the pass rate for the Bechdel Test is m
 
 Ultimately, the director's gender shapes not only the film's production and success but also the depth and authenticity of female representation within the story itself.
 
-## 
+### Trend Analysis Over Time (Percentage of Movies Passing Bechdel Test)
+
+```{r}
+
+# Calculate the percentage of movies passing the Bechdel test by year
+df_trend <- df_unique %>%
+  group_by(Year) %>%
+  summarize(pass_rate = mean(Bechdel_binary == 1, na.rm = TRUE) * 100)
+
+# Create the interactive plot
+plot <- ggplot(df_trend, aes(x = Year, y = pass_rate)) +
+  geom_line(color = "blue") +
+  geom_point(color = "blue") +
+  labs(title = "Percentage of Movies Passing the Bechdel Test Over Time",
+       x = "Year", y = "Percentage Passing Bechdel Test") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplotly(plot)
+```
+
+This final graph shows that the percentage of films passing the Bechdel Test hasn\'t increased over time, despite growing calls for better representation. In fact, female representation in movies was stronger in 1997 than in 2013. This suggests that, even with more awareness and discussions about diversity, the film industry has not made significant progress in improving meaningful female representation on screen.
