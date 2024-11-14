@@ -169,24 +169,30 @@ df_final <- df_final %>%
     For the purposes of our analysis, we assume these name-gender associations are accurate (e.g., "James" is classified as male). Given that only 101 out of 1,792 records are marked as unisex or have missing gender values, we decided to exclude these records when examining gender's impact on other variables.
 
 ```{r}
+library(DT) 
 # Open the dataset with the names associated with a gender
 df_name <- read.csv("https://query.data.world/s/vosjabgwxpybit5vkwjkyv7przl6km?dws=00000", header=TRUE, stringsAsFactors=FALSE)
-df_name[df_name$name == "James",]
 
+
+# Rename column for consistency
 df_name <- df_name %>% 
-  rename( Gender = gender)
+  rename(Gender = gender)
 
-# Separate the column 'director' into 'Name' and 'Last_Name' at the first space
+# Separate the column 'Director' in df_final into 'Name' and 'Last_Name' at the first space
 df_final <- df_final %>%
   separate(Director, into = c("Name", "Last_Name"), sep = " ", extra = "merge", fill = "right")
 
-#merge the two dataset and match the name of the director to a gender  
-df_final_gender <- left_join(df_final, df_name, by = c("Name" = "name"))
-df_final_gender <- df_final_gender %>%
-  select(-score)
+# Merge the datasets on the 'Name' column to match the director's name to a gender
+df_final_gender <- df_final %>%
+  left_join(df_name, by = c("Name" = "name")) %>%
+  select(-score)  # Remove unnecessary column
 
-print(df_final_gender)
-
+# Create the interactive table
+datatable(df_final_gender, 
+          options = list(pageLength = 10,  # Number of rows 
+                         autoWidth = TRUE, 
+                         searchHighlight = TRUE),
+          filter = 'top')  # add search filter to the top
 
 ```
 
@@ -227,8 +233,9 @@ df_final[c ("Gender","Genre", "Language", "Country_of_Origin", "Bechdel_test_res
 df_final$Imdb_Votes <- as.numeric(gsub(",", "", df_final$Imdb_Votes))
 df_final[c("Revenue", "Imdb_Rating", "Imdb_Votes")] <- lapply(df_final[c("Revenue", "Imdb_Rating", "Imdb_Votes")], as.numeric)
 
-# The types of variables our dataset has
-str(df_final)
+# Display a table with variable names and data types only
+variable_info <- data.frame(Variable = names(df_final), Type = sapply(df_final, class))
+print(variable_info)
 
 ```
 
@@ -240,6 +247,68 @@ na_counts <- colSums(is.na(df_final)) ## 32 NA in Revenue and 342 in Gender
 df_final <- na.omit(df_final)
 
 ```
+
+9.  **Variables and Descriptions after the cleaning**
+
+-   **Year (Release Date)**\
+    • **Description**: The year when the film was released to the public.\
+    • **Type**: Integer.
+
+-   **Bechdel Test Result (Passed/Failed)**\
+    • **Description**: This variable indicates whether the film passed or failed the Bechdel test, a measure of gender representation in films.\
+    • **Type**: Categorical/factor with possible values "Passed" or "Failed."
+
+-   **Budget (in \$)**\
+    • **Description**: The production budget of the film in U.S. dollars, adjusted for inflation to reflect 2013 dollar values.\
+    • **Type**: Numeric, stored as an integer.
+
+-   **Revenue (in \$)**\
+    • **Description**: The total revenue or box office earnings of the film in U.S. dollars, adjusted for inflation to 2013 prices.\
+    • **Type**: Numeric.
+
+-   **Language**\
+    • **Description**: The primary language(s) in which the film was released or broadcast, represented by specific languages such as "English" or "French."\
+    • **Type**: Categorical/factor.
+
+-   **Movie Title**\
+    • **Description**: The name of the film, provided as text.\
+    • **Type**: Text (Character).
+
+-   **Country of Origin**\
+    • **Description**: The country where the film was produced or primarily distributed, provided as the country’s name (e.g., "USA", "France").\
+    • **Type**: Categorical/factor.
+
+-   **IMDb Ratings**\
+    • **Description**: The film’s IMDb rating, often based on user reviews and ratings on the IMDb platform.\
+    • **Type**: Numeric.
+
+-   **Genre (Action, Drama, Comedy, etc.)**\
+    • **Description**: The primary genre(s) describing the film, such as Action, Drama, or Comedy.\
+    • **Type**: Categorical/factor.
+
+-   **IMDb Votes**\
+    • **Description**: The number of user reviews for the film’s IMDb rating on the IMDb platform.\
+    • **Type**: Numeric.
+
+-   **Wins**\
+    • **Description**: The number of awards the film has won (e.g., "Golden Globe", "Oscar").\
+    • **Type**: Numeric.
+
+-   **Nominations**\
+    • **Description**: The number of nominations for awards the film has received.\
+    • **Type**: Numeric.
+
+-   **Gender (Director’s Gender)**\
+    • **Description**: The gender of the film's director.\
+    • **Type**: Categorical/factor.
+
+-   **Director Name**\
+    • **Description**: The name of the director of the film.\
+    • **Type**: Text (Character).
+
+-   **Bechdel Binary**\
+    • **Description**: This variable indicates whether the film passed (1) or failed (0) the Bechdel test.\
+    • **Type**: Categorical/factor with possible values "Passed = 1" or "Failed = 0."
 
 ## Exploratory Data Analysis
 
@@ -317,70 +386,74 @@ numerical_summary <- summary(df_unique[, c("Budget", "Revenue", "Imdb_Rating", "
 numerical_summary_df <- as.data.frame(numerical_summary)
 
 # Convert the numerical summary data to an interactive table using DT
-numerical_summary_table <- datatable(numerical_summary_df, options = list(pageLength = 5))
+numerical_summary_table <- datatable(numerical_summary_df, options = list(pageLength = 6))
 
 # Print the interactive table
 numerical_summary_table
 ```
 
-### Correlation Heatmap: Revenue, Budget, Imdb_Rating, Wins, Nominations
+### Correlation Heatmap: Revenue, Budget, Imdb_Rating, Wins, Nominations, Bechdel_binary
 
-In this step, we present a correlation heatmap that displays the relationships between key variables: **Revenue**, **Budget**, **IMDb Rating**, **Wins**, and **Nominations**. By examining the correlation coefficients between these variables, this heatmap provides insights into the degree and direction of association among financial, critical, and award-related metrics. Positive correlations indicate that as one variable increases, the other tends to increase as well, while negative correlations suggest an inverse relationship. This visualization serves as a preliminary analysis, helping us identify which factors are most closely linked, and providing a basis for further exploration of the economic and critical impacts of female representation in films.
+In this step, we present a correlation heatmap that displays the relationships between key variables: **Revenue**, **Budget**, **IMDb Rating**, **Wins**, **Bechdel_binary** and **Nominations**. By examining the correlation coefficients between these variables, this heatmap provides insights into the degree and direction of association among financial, critical, and award-related metrics. Positive correlations indicate that as one variable increases, the other tends to increase as well, while negative correlations suggest an inverse relationship. This visualization serves as a preliminary analysis, helping us identify which factors are most closely linked, and providing a basis for further exploration of the economic and critical impacts of female representation in films.
 
 ```{r}
 
-library(plotly)
+# Select relevant columns including Bechdel_binary (which has values 0 and 1)
+num_cols <- df_unique %>% 
+  select(Revenue, Budget, Imdb_Rating, Wins, Nominations, Bechdel_binary)  %>%
+  mutate(across(everything(), as.numeric))
 
-# Calculate correlation matrix
-num_cols <- df_final %>% 
-  select(Revenue, Budget, Imdb_Rating, Wins, Nominations)
+# Calculate the correlation matrix with complete observations only
 corr_matrix <- cor(num_cols, use = "complete.obs")
 
-# Convert correlation matrix to long format using tidyr
+# Convert correlation matrix to long format for ggplot
 corr_long <- corr_matrix %>%
   as.data.frame() %>%
-  mutate(Var1 = rownames(.)) %>%
-  pivot_longer(cols = -Var1,
-              names_to = "Var2",
-              values_to = "value")
+  rownames_to_column(var = "Var1") %>%
+  pivot_longer(cols = -Var1, names_to = "Var2", values_to = "value")
 
-# Create the interactive heatmap with correlation values on the tiles
+# Create the heatmap with correlation values displayed on the tiles
 heatmap <- ggplot(corr_long, aes(x = Var1, y = Var2, fill = value)) +
   geom_tile(color = "white") +
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                      midpoint = 0, limit = c(-1,1)) +
-  geom_text(aes(label = round(value, 2)), color = "black", size = 4) + # Add correlation values on tiles
-  labs(title = "Correlation Heatmap: Revenue, Budget, Imdb_Rating, Wins, Nominations", x = "", y = "",
-       fill = "Correlation") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1, 1)) +
+  geom_text(aes(label = round(value, 2)), color = "black", size = 4) +  # Display correlation values
+  labs(title = "Correlation Heatmap: Revenue, Budget, Imdb_Rating, Wins, Nominations, Bechdel Test", 
+       x = "", y = "", fill = "Correlation") +
   theme_minimal() +
   theme(
     plot.title = element_text(hjust = 0.5),  # Center the title
     axis.text.x = element_text(angle = 45, hjust = 1)
   )
 
-# Make the heatmap interactive using plotly
+# Make the heatmap interactive with Plotly
 ggplotly(heatmap)
 ```
 
 ### Interpretation:
 
--   **High Positive Correlations:**
+#### **High Positive Correlations:**
 
-    -   **Budget and Revenue (0.62):** This indicates a strong positive correlation, meaning higher budgets are generally associated with higher revenue.
+1.  **Budget and Revenue (0.60)**: There is a strong positive correlation between budget and revenue. This suggests that films with higher production budgets tend to generate higher box office revenues. Higher budgets typically allow for better marketing, production, and star power, contributing to greater commercial success.
 
-    -   **Wins and Nominations (0.77):** This strong positive correlation shows that movies with more nominations tend to win more awards.
+2.  **Wins and Nominations (0.79)**: A very strong positive correlation, indicating that films with more nominations generally win more awards. This highlights the likelihood that films nominated for prestigious awards are often the ones that take home the honors.
 
--   **Moderate Correlations:**
+#### **Moderate Correlations:**
 
-    -   **Budget and Wins (0.49):** Movies with larger budgets tend to have more wins, though the correlation is not very strong.
+1.  **IMDb Rating and Nominations (0.48)**: There is a moderate positive correlation between IMDb ratings and nominations. Films with better ratings from audiences tend to receive more nominations, suggesting that critical success often paves the way for recognition in award circles.
 
-    -   **IMDb Rating and Nominations (0.48):** Higher IMDb ratings tend to correspond with more nominations, suggesting critical acclaim can influence recognition.
+#### **Weak or No Correlations:**
 
--   **Weak or No Correlations:**
+1.  **Budget and IMDb Rating (-0.04)**: There is virtually no correlation between the budget of a film and its IMDb rating, indicating that the amount spent on production does not necessarily correlate with higher user ratings. Audience ratings are influenced by various other factors, such as the story, acting, and direction.
 
-    -   **Budget and IMDb Rating (-0.04):** Budget has almost no correlation with IMDb ratings, indicating that higher spending doesn't necessarily lead to better viewer ratings.
+2.  **Wins and IMDb Rating (0.06)**: The correlation between wins and IMDb ratings is very weak, suggesting that winning awards does not strongly impact the audience's ratings. A film can be successful in terms of awards but may not necessarily receive high ratings from the audience.
 
-    -   **Wins and IMDb Rating (0.06):** Wins also show a very weak correlation with IMDb ratings, suggesting award success and viewer ratings are largely independent.
+3.  **Bechdel Binary (0.00 to -0.15 with other variables)**: The Bechdel binary variable (indicating whether a film passed or failed the Bechdel test) shows very weak correlations with other variables, suggesting that passing the Bechdel test does not have a significant relationship with budget, revenue, IMDb rating, or wins. For example:
+
+    -   **Bechdel_binary and Revenue (-0.10)**: A very weak negative correlation, meaning that whether a film passes the Bechdel test has almost no influence on its revenue.
+
+    -   **Bechdel_binary and Budget (-0.15)**: A weak negative correlation, showing that films passing the Bechdel test are slightly less likely to have larger budgets, though the relationship is not strong.
+
+    -   **Bechdel_binary and IMDb Rating (-0.13)**: A slightly negative correlation, indicating a small negative relationship between passing the Bechdel test and IMDb ratings. However, the correlation is weak.
 
 ### Revenue Distribution by Bechdel Test Outcome
 
@@ -388,7 +461,6 @@ In this step, we examine the distribution of movie revenues based on whether fil
 
 ```{r}
 
-library(plotly)
 
 # Check for any missing or NA values in the Revenue column to ensure data integrity
 df_unique <- df_unique %>% drop_na(Revenue)
@@ -404,7 +476,7 @@ plot <- ggplot(df_unique, aes(x = factor(Bechdel_binary), y = log(Revenue), fill
     subtitle = "Log of Revenue",
     x = "Bechdel Test Result",
     y = "Revenue (Log Scale)",
-    fill = "Test Result"
+    fill = "Bechdel Test Result\n(0 = Fail, 1 = Pass)"
   ) +
   theme_minimal() +
   theme(
@@ -430,8 +502,6 @@ Overall, this suggests that films failing the Bechdel Test may achieve higher re
 In this section we use a boxplot that compares film revenues across different genres, with results segmented by whether the films pass or fail the Bechdel Test.
 
 ```{r}
-
-library(plotly)
 
 # interactive plot
 plot <- ggplot(df_final, aes(x = Genre, y = Revenue, fill = factor(Bechdel_binary))) +
@@ -480,7 +550,7 @@ p <- ggplot(df_unique, aes(x = Imdb_Rating, y = Revenue, color = factor(Bechdel_
   scale_y_log10() + 
   scale_color_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +  # Set colors for Bechdel_binary
   labs(title = "Revenue vs. IMDb Rating by Bechdel Test Result",
-       x = "IMDb Rating", y = "Log of Revenue", color = "Bechdel Test (0 = Fail, 1 = Pass)") +
+       x = "IMDb Rating", y = "Log of Revenue", color = "Bechdel Test Result\n(0 = Fail, 1 = Pass)") +
   theme_minimal()
 
 ggplotly(p)
@@ -489,7 +559,7 @@ ggplotly(p)
 
 Passing the Bechdel Test does not appear to have a major impact on revenue, as both passing and failing movies follow similar trends in terms of IMDb Rating and Revenue. Instead, IMDb rating itself seems to be the stronger indicator of revenue potential across both groups, though this effect is relatively modest
 
-### Wins by Bechdel Test Result
+### Wins by Bechdel Test Result 
 
 ```{r}
 
@@ -521,7 +591,7 @@ plot <- ggplot(df_unique, aes(x = Bechdel_binary, y = Wins, fill = Bechdel_binar
   labs(title = "Awards by Bechdel Test Result",
        x = "Bechdel Test Result", 
        y = "Number of Awards",
-       fill = "Bechdel Test (0 = Fail, 1 = Pass)") +
+       fill = "Bechdel Test Result\n(0 = Fail, 1 = Pass)") +
   scale_fill_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5)) +
@@ -550,7 +620,7 @@ library(plotly)
 plot <- ggplot(df_unique, aes(x = factor(Bechdel_binary), y = Imdb_Rating, fill = factor(Bechdel_binary))) +
   geom_boxplot(outlier.shape = NA) +
   labs(title = "IMDb Ratings by Bechdel Test Result",
-       x = "Bechdel Test Result (0 = Fail, 1 = Pass)", y = "IMDb Rating") +
+       x = "Bechdel Test Result", y = "IMDb Rating",  fill = "Bechdel Test Result\n(0 = Fail, 1 = Pass)") +
   scale_fill_manual(values = c("0" = "#FF7F50", "1" = "#4CAF50")) +
   theme_minimal() + 
   theme(plot.title = element_text(hjust = 0.5))
@@ -866,3 +936,127 @@ In contrast, for movies directed by men, the pass rate for the Bechdel Test is m
 Ultimately, the director's gender shapes not only the film's production and success but also the depth and authenticity of female representation within the story itself.
 
 ## 
+
+## Analysis
+
+In the analysis phase, we aim to applie statistical models to investigate the relationships between passing the Bechdel Test and various film performance metrics. Specifically, our focus is understanding if passing the Bechdel Test significantly correlates with higher revenue, more award wins, and improved IMDb ratings. Furthermore, we want to create predictive models for estimating a film's likelihood of passing the Bechdel Test based on features like budget, genre, and director.
+
+1.  **Correlation Analysis for Bechdel Test Result and Revenue**
+
+    This code performs a Pearson correlation test to determine if there is a statistically significant relationship between `Bechdel_test_result` and `Revenue`.
+
+    ```{r}
+    # Convert columns to numeric if necessary
+    df_unique$Bechdel_test_result <- as.numeric(df_unique$Bechdel_test_result)
+    df_unique$Revenue <- as.numeric(df_unique$Revenue)
+
+    # Perform correlation test again
+    correlation_test <- cor.test(df_unique$Bechdel_test_result, df_unique$Revenue, method = "pearson")
+    print(correlation_test)
+    ```
+
+    The Pearson correlation test between Bechdel_test_result and Revenue yielded a correlation coefficient of approximately -0.095, with a p-value of 8.532e-05. This result indicates a small but statistically significant negative correlation between passing the Bechdel Test and revenue. The 95% confidence interval for this correlation ranges from -0.141 to -0.048, suggesting that the true correlation is likely weakly negative.
+
+    #### Key Findings:
+
+    -   **Correlation Value**: The correlation coefficient of -0.095 implies a weak inverse relationship, where films that pass the Bechdel Test tend to have slightly lower revenues on average. However, given the small magnitude of this correlation, the effect is minor.
+
+    -   **Statistical Significance**: The p-value (\< 0.0001) shows that this negative correlation is statistically significant, meaning it is unlikely to be due to random chance.
+
+    #### Conclusion:
+
+    While there is a statistically significant relationship between passing the Bechdel Test and revenue, the effect size is minimal, suggesting that passing the test is not a strong predictor of a film’s financial performance. This finding implies that other factors (such as budget, genre, and marketing) likely play a much more substantial role in determining a film's revenue than its performance on the Bechdel Test.
+
+2.  **Logistic Regression for Awards and IMDb Ratings**
+
+    In this section we will create some models to help us determine if passing the Bechdel Test is a predictor of critical acclaim. We will use a logistic regression for **award model and** The **imdb_rating_model** uses linear regression to estimate IMDb rating as a continuous variable
+
+    ```{r}
+    # Create a binary variable `awards` indicating whether the film won any awards (1 if Wins > 0, else 0)
+    df_unique$awards <- ifelse(df_unique$Wins > 0, 1, 0)
+
+    # Logistic regression for binary outcome (awards)
+    award_model <- glm(awards ~ Bechdel_test_result + Budget + Genre, data = df_unique, family = binomial)
+    summary(award_model)
+
+    # Linear regression for continuous IMDb ratings
+    imdb_rating_model <- lm(Imdb_Rating ~ Bechdel_test_result + Budget + Genre, data = df_unique)
+    summary(imdb_rating_model)
+    ```
+
+    #### **Logistic Regression Model for Awards**
+
+    The logistic regression model predicts the likelihood of a film winning at least one award based on its Bechdel Test result, budget, and genre.
+
+    #### **Key Findings**:
+
+    -   **Bechdel Test Result**: The coefficient for `Bechdel_test_result` is -0.097, which is not statistically significant (`p = 0.441`). This indicates that passing the Bechdel Test does not have a meaningful impact on a film's likelihood of winning awards.
+
+    -   **Budget**: The budget has a highly significant positive effect (`p < 0.001`). With an estimated coefficient of 9.458×10−99.458 \times 10^{-9}9.458×10−9, films with higher budgets are more likely to win awards. Although the effect size seems small due to budget scaling, it remains a strong predictor.
+
+    -   **Genres**: Several genres show significant effects on award wins:
+
+        -   **Animation**, **Biography**, **Comedy**, **Crime**, and **Drama** all have positive and statistically significant coefficients, suggesting these genres are more likely to win awards.
+
+        -   **Documentary**, **Horror**, **Fantasy**, and others do not show significant effects, indicating no clear relationship with award success.
+
+    #### **Conclusion**: 
+
+    Budget and certain genres are significant predictors of award wins, whereas passing the Bechdel Test does not seem to increase a film’s award potential. This implies that industry recognition through awards is more influenced by production investment and genre than by diversity indicators like the Bechdel Test.
+
+    #### Linear Regression Model for IMDb Ratings 
+
+    The linear regression model assesses how a film’s Bechdel Test result, budget, and genre are related to IMDb ratings.
+
+    #### **Key Findings**:
+
+    -   **Bechdel Test Result**: The coefficient for `Bechdel_test_result` is -0.275, which is statistically significant (`p < 0.001`). This negative coefficient suggests that films passing the Bechdel Test have slightly lower IMDb ratings on average, although the effect size is small.
+
+    -   **Budget**: The budget coefficient is not statistically significant (`p = 0.369`), indicating that budget alone does not strongly influence IMDb ratings.
+
+    -   **Genres**: Several genres have a significant impact on IMDb ratings:
+
+        -   **Adventure**, **Animation**, **Biography**, **Comedy**, **Crime**, **Documentary**, and **Drama** are all positively associated with higher IMDb ratings.
+
+        -   **Horror** and **Music** have negative, significant coefficients, suggesting that films in these genres tend to have slightly lower IMDb ratings on average.
+
+    #### **Model Fit**: 
+
+    The adjusted R2R^2R2 value of 0.124 indicates that only about 12.4% of the variability in IMDb ratings is explained by this model, suggesting other unaccounted factors may significantly influence IMDb ratings.
+
+    #### **Conclusion**: 
+
+    While passing the Bechdel Test is associated with a slight decrease in IMDb ratings, the effect is minimal. Genre remains a more influential factor, with genres like **Biography** and **Documentary** positively associated with higher ratings. This outcome suggests that audience ratings on IMDb are more closely tied to genre preferences than to a film's adherence to gender diversity metrics.
+
+    #### Overall Conclusion
+
+    From both models, it is clear that genre and budget are more powerful predictors of a film’s critical success (as measured by awards and IMDb ratings) than passing the Bechdel Test. While the Bechdel Test serves as a valuable tool for analyzing gender representation, these findings suggest that its impact on industry recognition and audience ratings is limited. Future analyses could explore other diversity metrics or interactions to provide a more nuanced understanding of representation’s role in film success.
+
+3.  **Predictive Model for Film Success (Revenue, Awards, IMDb Ratings)**
+
+    In this section we will build a predictive model to estimate a film’s success on revenue terms based on the Bechdel Test results, budget, genre of fils, and gender of directors.
+
+    ```{r}
+
+
+    # Linear regression for Revenue (continuous outcome)
+    revenue_model <- lm(Revenue ~ Bechdel_test_result + Budget + Genre + Gender, data = df_unique)
+    summary(revenue_model)
+
+
+
+    ```
+
+    -   
+
+    #### **Key Findings**:
+
+    **Budget** and certain **genres** appear to significantly as in the model before, they influence revenue. Specifically, the budget has a strong positive effect on revenue, with a coefficient estimate of **3.04** (p \< 2e-16).
+
+    **Genres** such as Adventure, Animation, Horror, and Musical also significantly affect revenue, with Adventure and Musical showing the strongest positive relationships (p-values \< 0.05).
+
+    **Bechdel Test Result**, **Gender**, and many other genres (e.g., Biography, Comedy, Drama) were not statistically significant (p \> 0.05). This suggests that the Bechdel test result and gender have less influence on revenue in this dataset..
+
+    #### **Conclusion:**
+
+    The linear regression analysis of revenue reveals that **budget** and specific **genres** are the most significant predictors of a film's revenue. A higher budget is strongly associated with increased revenue, highlighting the crucial role of financial investment in a film's commercial success. Genres such as **Adventure**, **Animation**, and **Musical** also show significant positive relationships with revenue, indicating that films in these genres tend to perform better financially. On the other hand, **Bechdel Test Result** and **Gender** do not appear to significantly influence revenue, suggesting that factors like gender representation and passing the Bechdel test may not directly affect a film's box office performance in this dataset.
