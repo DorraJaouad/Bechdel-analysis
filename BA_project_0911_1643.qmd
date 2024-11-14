@@ -553,7 +553,7 @@ ggplotly(p)
 
 Passing the Bechdel Test does not appear to have a major impact on revenue, as both passing and failing movies follow similar trends in terms of IMDb Rating and Revenue. Instead, IMDb rating itself seems to be the stronger indicator of revenue potential across both groups, though this effect is relatively modest
 
-### Wins by Bechdel Test Result 
+### Wins by Bechdel Test Result
 
 ```{r}
 
@@ -613,6 +613,22 @@ plot <- ggplot(df_unique, aes(x = factor(Bechdel_binary), y = Imdb_Rating, fill 
 
 ggplotly(plot)
 ```
+
+The visual suggests that movies that failed the test had better IMDb ratings, we can statistically test if this is significant or not.
+
+```{r}
+# Separate IMDb ratings into two groups based on Bechdel Test result
+fail_ratings <- df_unique$Imdb_Rating[df_unique$Bechdel_binary == 0]
+pass_ratings <- df_unique$Imdb_Rating[df_unique$Bechdel_binary == 1]
+
+# Perform independent samples t-test
+t_test_result <- t.test(pass_ratings, fail_ratings, alternative = "greater")
+
+# Print the t-test result
+print(t_test_result)
+```
+
+Indeed, the test shows that movies with failed Bechdel test had better IMDb rating than succeeded Bechdel test.
 
 ### Director's gender impact
 
@@ -944,7 +960,7 @@ plot <- ggplot(df_trend, aes(x = Year, y = pass_rate)) +
 ggplotly(plot)
 ```
 
-This final graph shows that the percentage of films passing the Bechdel Test hasn\'t increased over time, despite growing calls for better representation. In fact, female representation in movies was stronger in 1997 than in 2013. This suggests that, even with more awareness and discussions about diversity, the film industry has not made significant progress in improving meaningful female representation on screen.
+This final graph shows that the percentage of films passing the Bechdel Test hasn't increased over time, despite growing calls for better representation. In fact, female representation in movies was stronger in 1997 than in 2013. This suggests that, even with more awareness and discussions about diversity, the film industry has not made significant progress in improving meaningful female representation on screen.
 
 ## Analysis
 
@@ -1001,7 +1017,7 @@ In the analysis phase, we aim to applie statistical models to investigate the re
 
     -   **Bechdel Test Result**: The coefficient for `Bechdel_test_result` is -0.097, which is not statistically significant (`p = 0.441`). This indicates that passing the Bechdel Test does not have a meaningful impact on a film's likelihood of winning awards.
 
-    -   **Budget**: The budget has a highly significant positive effect (`p < 0.001`). With an estimated coefficient of 9.458×10−99.458 \times 10^{-9}9.458×10−9, films with higher budgets are more likely to win awards. Although the effect size seems small due to budget scaling, it remains a strong predictor.
+    -   **Budget**: The budget has a highly significant positive effect (`p < 0.001`). With an estimated coefficient of 9.458×10−99.458 \times 10\^{-9}9.458×10−9, films with higher budgets are more likely to win awards. Although the effect size seems small due to budget scaling, it remains a strong predictor.
 
     -   **Genres**: Several genres show significant effects on award wins:
 
@@ -1009,11 +1025,11 @@ In the analysis phase, we aim to applie statistical models to investigate the re
 
         -   **Documentary**, **Horror**, **Fantasy**, and others do not show significant effects, indicating no clear relationship with award success.
 
-    #### **Conclusion**: 
+    #### **Conclusion**:
 
     Budget and certain genres are significant predictors of award wins, whereas passing the Bechdel Test does not seem to increase a film’s award potential. This implies that industry recognition through awards is more influenced by production investment and genre than by diversity indicators like the Bechdel Test.
 
-    #### Linear Regression Model for IMDb Ratings 
+    #### Linear Regression Model for IMDb Ratings
 
     The linear regression model assesses how a film’s Bechdel Test result, budget, and genre are related to IMDb ratings.
 
@@ -1029,11 +1045,11 @@ In the analysis phase, we aim to applie statistical models to investigate the re
 
         -   **Horror** and **Music** have negative, significant coefficients, suggesting that films in these genres tend to have slightly lower IMDb ratings on average.
 
-    #### **Model Fit**: 
+    #### **Model Fit**:
 
-    The adjusted R2R^2R2 value of 0.124 indicates that only about 12.4% of the variability in IMDb ratings is explained by this model, suggesting other unaccounted factors may significantly influence IMDb ratings.
+    The adjusted R2R\^2R2 value of 0.124 indicates that only about 12.4% of the variability in IMDb ratings is explained by this model, suggesting other unaccounted factors may significantly influence IMDb ratings.
 
-    #### **Conclusion**: 
+    #### **Conclusion**:
 
     While passing the Bechdel Test is associated with a slight decrease in IMDb ratings, the effect is minimal. Genre remains a more influential factor, with genres like **Biography** and **Documentary** positively associated with higher ratings. This outcome suggests that audience ratings on IMDb are more closely tied to genre preferences than to a film's adherence to gender diversity metrics.
 
