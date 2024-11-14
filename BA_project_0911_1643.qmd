@@ -66,7 +66,7 @@ In this section, we outline the process of data collection and merging. The data
 
 The two datasets were successfully merged into a single primary data frame using the IMDb ID as the key. This process resulted in a consolidated dataset comprising 1,792 rows. Specific columns of interest were selected to facilitate further analysis and ensure the relevance of the data to our research objectives.
 
-```{r,echo=FALSE, warning=FALSE}
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
 library(jsonlite)
 library(dplyr)
 library(tidyr)
@@ -76,7 +76,6 @@ library(RColorBrewer)
 library(ggplot2)
 library(plotly)
 library(DT)
-#install.packages("gt")
 library(gt)
 ```
 
