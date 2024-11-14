@@ -936,3 +936,127 @@ In contrast, for movies directed by men, the pass rate for the Bechdel Test is m
 Ultimately, the director's gender shapes not only the film's production and success but also the depth and authenticity of female representation within the story itself.
 
 ## 
+
+## Analysis
+
+In the analysis phase, we aim to applie statistical models to investigate the relationships between passing the Bechdel Test and various film performance metrics. Specifically, our focus is understanding if passing the Bechdel Test significantly correlates with higher revenue, more award wins, and improved IMDb ratings. Furthermore, we want to create predictive models for estimating a film's likelihood of passing the Bechdel Test based on features like budget, genre, and director.
+
+1.  **Correlation Analysis for Bechdel Test Result and Revenue**
+
+    This code performs a Pearson correlation test to determine if there is a statistically significant relationship between `Bechdel_test_result` and `Revenue`.
+
+    ```{r}
+    # Convert columns to numeric if necessary
+    df_unique$Bechdel_test_result <- as.numeric(df_unique$Bechdel_test_result)
+    df_unique$Revenue <- as.numeric(df_unique$Revenue)
+
+    # Perform correlation test again
+    correlation_test <- cor.test(df_unique$Bechdel_test_result, df_unique$Revenue, method = "pearson")
+    print(correlation_test)
+    ```
+
+    The Pearson correlation test between Bechdel_test_result and Revenue yielded a correlation coefficient of approximately -0.095, with a p-value of 8.532e-05. This result indicates a small but statistically significant negative correlation between passing the Bechdel Test and revenue. The 95% confidence interval for this correlation ranges from -0.141 to -0.048, suggesting that the true correlation is likely weakly negative.
+
+    #### Key Findings:
+
+    -   **Correlation Value**: The correlation coefficient of -0.095 implies a weak inverse relationship, where films that pass the Bechdel Test tend to have slightly lower revenues on average. However, given the small magnitude of this correlation, the effect is minor.
+
+    -   **Statistical Significance**: The p-value (\< 0.0001) shows that this negative correlation is statistically significant, meaning it is unlikely to be due to random chance.
+
+    #### Conclusion:
+
+    While there is a statistically significant relationship between passing the Bechdel Test and revenue, the effect size is minimal, suggesting that passing the test is not a strong predictor of a film’s financial performance. This finding implies that other factors (such as budget, genre, and marketing) likely play a much more substantial role in determining a film's revenue than its performance on the Bechdel Test.
+
+2.  **Logistic Regression for Awards and IMDb Ratings**
+
+    In this section we will create some models to help us determine if passing the Bechdel Test is a predictor of critical acclaim. We will use a logistic regression for **award model and** The **imdb_rating_model** uses linear regression to estimate IMDb rating as a continuous variable
+
+    ```{r}
+    # Create a binary variable `awards` indicating whether the film won any awards (1 if Wins > 0, else 0)
+    df_unique$awards <- ifelse(df_unique$Wins > 0, 1, 0)
+
+    # Logistic regression for binary outcome (awards)
+    award_model <- glm(awards ~ Bechdel_test_result + Budget + Genre, data = df_unique, family = binomial)
+    summary(award_model)
+
+    # Linear regression for continuous IMDb ratings
+    imdb_rating_model <- lm(Imdb_Rating ~ Bechdel_test_result + Budget + Genre, data = df_unique)
+    summary(imdb_rating_model)
+    ```
+
+    #### **Logistic Regression Model for Awards**
+
+    The logistic regression model predicts the likelihood of a film winning at least one award based on its Bechdel Test result, budget, and genre.
+
+    #### **Key Findings**:
+
+    -   **Bechdel Test Result**: The coefficient for `Bechdel_test_result` is -0.097, which is not statistically significant (`p = 0.441`). This indicates that passing the Bechdel Test does not have a meaningful impact on a film's likelihood of winning awards.
+
+    -   **Budget**: The budget has a highly significant positive effect (`p < 0.001`). With an estimated coefficient of 9.458×10−99.458 \times 10^{-9}9.458×10−9, films with higher budgets are more likely to win awards. Although the effect size seems small due to budget scaling, it remains a strong predictor.
+
+    -   **Genres**: Several genres show significant effects on award wins:
+
+        -   **Animation**, **Biography**, **Comedy**, **Crime**, and **Drama** all have positive and statistically significant coefficients, suggesting these genres are more likely to win awards.
+
+        -   **Documentary**, **Horror**, **Fantasy**, and others do not show significant effects, indicating no clear relationship with award success.
+
+    #### **Conclusion**: 
+
+    Budget and certain genres are significant predictors of award wins, whereas passing the Bechdel Test does not seem to increase a film’s award potential. This implies that industry recognition through awards is more influenced by production investment and genre than by diversity indicators like the Bechdel Test.
+
+    #### Linear Regression Model for IMDb Ratings 
+
+    The linear regression model assesses how a film’s Bechdel Test result, budget, and genre are related to IMDb ratings.
+
+    #### **Key Findings**:
+
+    -   **Bechdel Test Result**: The coefficient for `Bechdel_test_result` is -0.275, which is statistically significant (`p < 0.001`). This negative coefficient suggests that films passing the Bechdel Test have slightly lower IMDb ratings on average, although the effect size is small.
+
+    -   **Budget**: The budget coefficient is not statistically significant (`p = 0.369`), indicating that budget alone does not strongly influence IMDb ratings.
+
+    -   **Genres**: Several genres have a significant impact on IMDb ratings:
+
+        -   **Adventure**, **Animation**, **Biography**, **Comedy**, **Crime**, **Documentary**, and **Drama** are all positively associated with higher IMDb ratings.
+
+        -   **Horror** and **Music** have negative, significant coefficients, suggesting that films in these genres tend to have slightly lower IMDb ratings on average.
+
+    #### **Model Fit**: 
+
+    The adjusted R2R^2R2 value of 0.124 indicates that only about 12.4% of the variability in IMDb ratings is explained by this model, suggesting other unaccounted factors may significantly influence IMDb ratings.
+
+    #### **Conclusion**: 
+
+    While passing the Bechdel Test is associated with a slight decrease in IMDb ratings, the effect is minimal. Genre remains a more influential factor, with genres like **Biography** and **Documentary** positively associated with higher ratings. This outcome suggests that audience ratings on IMDb are more closely tied to genre preferences than to a film's adherence to gender diversity metrics.
+
+    #### Overall Conclusion
+
+    From both models, it is clear that genre and budget are more powerful predictors of a film’s critical success (as measured by awards and IMDb ratings) than passing the Bechdel Test. While the Bechdel Test serves as a valuable tool for analyzing gender representation, these findings suggest that its impact on industry recognition and audience ratings is limited. Future analyses could explore other diversity metrics or interactions to provide a more nuanced understanding of representation’s role in film success.
+
+3.  **Predictive Model for Film Success (Revenue, Awards, IMDb Ratings)**
+
+    In this section we will build a predictive model to estimate a film’s success on revenue terms based on the Bechdel Test results, budget, genre of fils, and gender of directors.
+
+    ```{r}
+
+
+    # Linear regression for Revenue (continuous outcome)
+    revenue_model <- lm(Revenue ~ Bechdel_test_result + Budget + Genre + Gender, data = df_unique)
+    summary(revenue_model)
+
+
+
+    ```
+
+    -   
+
+    #### **Key Findings**:
+
+    **Budget** and certain **genres** appear to significantly as in the model before, they influence revenue. Specifically, the budget has a strong positive effect on revenue, with a coefficient estimate of **3.04** (p \< 2e-16).
+
+    **Genres** such as Adventure, Animation, Horror, and Musical also significantly affect revenue, with Adventure and Musical showing the strongest positive relationships (p-values \< 0.05).
+
+    **Bechdel Test Result**, **Gender**, and many other genres (e.g., Biography, Comedy, Drama) were not statistically significant (p \> 0.05). This suggests that the Bechdel test result and gender have less influence on revenue in this dataset..
+
+    #### **Conclusion:**
+
+    The linear regression analysis of revenue reveals that **budget** and specific **genres** are the most significant predictors of a film's revenue. A higher budget is strongly associated with increased revenue, highlighting the crucial role of financial investment in a film's commercial success. Genres such as **Adventure**, **Animation**, and **Musical** also show significant positive relationships with revenue, indicating that films in these genres tend to perform better financially. On the other hand, **Bechdel Test Result** and **Gender** do not appear to significantly influence revenue, suggesting that factors like gender representation and passing the Bechdel test may not directly affect a film's box office performance in this dataset.
