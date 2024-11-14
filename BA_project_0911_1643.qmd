@@ -37,11 +37,11 @@ The primary objective of this project is to investigate the relationship between
 
 ## Research Questions
 
-In this section, we pose the following research questions to explore the potential influence of female representation in films on commercial and critical success. By examining correlations between Bechdel Test results and metrics like revenue, awards, and IMDb ratings, we aim to identify patterns that link gender diversity with performance outcomes. Additionally, we explore predictive models to assess whether factors such as budget, genre, and director can reliably estimate both a film’s success and its likelihood of passing the Bechdel Test. These questions guide our analysis to uncover data-driven insights into the economic and critical impact of gender representation in the film industry.
+In this section, we pose the following research questions to explore the potential influence of female representation in films on commercial and critical success. By examining correlations between Bechdel Test results and metrics like revenue, awards, and IMDb ratings, we aim to identify patterns that link gender diversity with performance outcomes. Additionally, we explore predictive models to assess whether factors such as budget, genre, and director can reliably estimate both a film's success and its likelihood of passing the Bechdel Test. These questions guide our analysis to uncover data-driven insights into the economic and critical impact of gender representation in the film industry.
 
 1.  Is there a significant correlation between passing the Bechdel test and a film's revenue?
 2.  Do films that pass the Bechdel test tend to win more awards or receive higher IMDb ratings? 
-3.  Can we build a predictive model to estimate a film’s success (revenue, awards, IMDb ratings) based on the Bechdel test results and other factors like budget, genre, and director?
+3.  Can we build a predictive model to estimate a film's success (revenue, awards, IMDb ratings) based on the Bechdel test results and other factors like budget, genre, and director?
 4.  Can we develop a predictive model to determine whether a film will pass the Bechdel test based on factors such as budget, genre, and director?
 
 ## Data Collection
@@ -54,7 +54,7 @@ In this section, we outline the process of data collection and merging. The data
 
 The two datasets were successfully merged into a single primary data frame using the IMDb ID as the key. This process resulted in a consolidated dataset comprising 1,792 rows. Specific columns of interest were selected to facilitate further analysis and ensure the relevance of the data to our research objectives.
 
-```{r}
+```{r,echo=FALSE, warning=FALSE}
 library(jsonlite)
 library(dplyr)
 library(tidyr)
@@ -63,6 +63,9 @@ library(tidyverse)
 library(RColorBrewer)
 library(ggplot2)
 library(plotly)
+library(DT)
+#install.packages("gt")
+library(gt)
 ```
 
 ```{r}
@@ -158,7 +161,7 @@ df_final <- df_final %>%
 
 4.  **Integrating Director Gender for Analysis**
 
-    To explore the potential impact of a director's gender on a film’s performance in the Bechdel Test, we extended our dataset by merging it with an external table that maps names to gender. This table associates names with specific genders, where:
+    To explore the potential impact of a director's gender on a film's performance in the Bechdel Test, we extended our dataset by merging it with an external table that maps names to gender. This table associates names with specific genders, where:
 
     -   male = 1
 
@@ -166,9 +169,9 @@ df_final <- df_final %>%
 
     -   Unisex = 3
 
-    For the purposes of our analysis, we assume these name-gender associations are accurate (e.g., "James" is classified as male). Given that only 101 out of 1,792 records are marked as unisex or have missing gender values, we decided to exclude these records when examining gender’s impact on other variables.
+    For the purposes of our analysis, we assume these name-gender associations are accurate (e.g., "James" is classified as male). Given that only 101 out of 1,792 records are marked as unisex or have missing gender values, we decided to exclude these records when examining gender's impact on other variables.
 
-```{r}
+```{r,echo=FALSE, warning=FALSE}
 library(DT) 
 # Open the dataset with the names associated with a gender
 df_name <- read.csv("https://query.data.world/s/vosjabgwxpybit5vkwjkyv7przl6km?dws=00000", header=TRUE, stringsAsFactors=FALSE)
@@ -224,7 +227,7 @@ df_final$Bechdel_binary <- as.factor(ifelse(df_final$Bechdel_test_result == "PAS
 7.  **Ensuring Correct Variable Types for Exploratory Data Analysis**\
     To prepare for exploratory data analysis, we set appropriate data types for each variable. *Gender*, *Genre*, *Language*, *Country_of_Origin*, *Bechdel_test_result*, and *Bechdel_binary* are converted to categorical variables, while *Revenue*, *Imdb_Rating*, and *Imdb_Votes* are transformed to numeric types for accurate calculations.
 
-```{r}
+```{r,echo=FALSE, warning=FALSE}
 # To make sure our EDA works we need to make sure the type of the variable is correct
 # Gender, Genre, language --> to categorical
 df_final[c ("Gender","Genre", "Language", "Country_of_Origin", "Bechdel_test_result", "Bechdel_binary")] <- lapply (df_final [c("Gender","Genre", "Language", "Country_of_Origin", "Bechdel_test_result", "Bechdel_binary")], as.factor)
@@ -318,7 +321,7 @@ This exploratory analysis aims to uncover relationships between female represent
     In this step, we create a deduplicated dataset based on unique film titles. This dataset will be used for analysis in all columns except for *Genre* and *Language*. By grouping the data by *Movie_Title* and selecting the first occurrence of each variable, we ensure that only one entry per film is considered for analysis. We then summarize the dataset to count the number of distinct values in each column, providing an overview of the diversity within the data.
 
 ```{r}
-library(DT)
+
 # Create a deduplicated dataset based on unique film titles
 df_unique <- df_final %>% 
   group_by(Movie_Title) %>% 
@@ -337,14 +340,11 @@ summary_data_table
 
 ```
 
-\
-
 2.  **Summarizing Categorical Variables**\
     In this step, we summarize the categorical variables, including *Bechdel_test_result*, *Genre*, *Gender*, and *Bechdel_binary*, by counting the occurrences of each unique category. This provides an overview of the distribution of these variables in the dataset, which is essential for understanding their role in the analysis.
 
 ```{r}
-#install.packages("DT")
-library(DT)
+
 # Summarize the Bechdel test result, Genre, and Gender with counts
 bechdel_test_summary <- df_unique %>%
   count(Bechdel_test_result, name = "count") %>%
@@ -376,9 +376,6 @@ gender_summary_table
     In this step, we summarize the key numerical columns, including *Budget*, *Revenue*, *Imdb_Rating*, *Imdb_Votes*, *Wins*, and *Nominations*. This summary provides descriptive statistics for these variables, offering insights into their distribution and range, which are essential for understanding their role in the analysis of film performance.
 
 ```{r}
-
-library(DT)
-
 # Summarize the numerical columns
 numerical_summary <- summary(df_unique[, c("Budget", "Revenue", "Imdb_Rating", "Imdb_Votes", "Wins", "Nominations")])
 
@@ -460,8 +457,6 @@ ggplotly(heatmap)
 In this step, we examine the distribution of movie revenues based on whether films pass or fail the Bechdel Test. Using a violin plot overlaid with boxplots, we visualize the log-transformed revenue to handle any large variances in revenue data, which allows us to better observe patterns across Bechdel Test outcomes. This visualization helps us assess whether movies that pass the Bechdel Test tend to have different revenue distributions compared to those that fail, providing preliminary insights into the financial impact of female representation in films.
 
 ```{r}
-
-
 # Check for any missing or NA values in the Revenue column to ensure data integrity
 df_unique <- df_unique %>% drop_na(Revenue)
 
@@ -502,7 +497,6 @@ Overall, this suggests that films failing the Bechdel Test may achieve higher re
 In this section we use a boxplot that compares film revenues across different genres, with results segmented by whether the films pass or fail the Bechdel Test.
 
 ```{r}
-
 # interactive plot
 plot <- ggplot(df_final, aes(x = Genre, y = Revenue, fill = factor(Bechdel_binary))) +
   geom_boxplot(outlier.shape = NA, alpha = 0.8) +  # Set transparency for better visibility
@@ -581,10 +575,7 @@ summary_stats
 
 We see that failing the test is more common. The average number of win remains the same but the change is that 50% of films that passed the test had at least 4 awards and for those failing the test, 50% of them had at least 3 awards.
 
-```{r}
-
-library(plotly)
-
+```{r,echo=FALSE, warning=FALSE}
 # Create the interactive plot
 plot <- ggplot(df_unique, aes(x = Bechdel_binary, y = Wins, fill = Bechdel_binary)) +
   geom_boxplot(outlier.shape = NA) +
@@ -611,11 +602,6 @@ ggplotly(plot)
 ### IMDb Ratings by Bechdel Test Result
 
 ```{r}
-
-library(tidyr)
-library(ggplot2)
-library(plotly)
-
 # Create the interactive plot
 plot <- ggplot(df_unique, aes(x = factor(Bechdel_binary), y = Imdb_Rating, fill = factor(Bechdel_binary))) +
   geom_boxplot(outlier.shape = NA) +
@@ -628,175 +614,223 @@ plot <- ggplot(df_unique, aes(x = factor(Bechdel_binary), y = Imdb_Rating, fill 
 ggplotly(plot)
 ```
 
-### Trend Analysis Over Time (Percentage of Movies Passing Bechdel Test)
+### Director's gender impact
+
+This section will examine how the director's gender influences various aspects of the data, including budget, revenue, IMDb score, and the Bechdel test results.
+
+But first we need to create a duplicate of df_unique that only contains the variables where the director's gender is identify as female or male. So we need to remove the unisex (3) value.
 
 ```{r}
+# Create a new dataframe with only Gender 0 and 1
+df_gender <- df_unique %>% 
+  filter(Gender %in% c(0, 1))
 
-library(dplyr)
-library(ggplot2)
-library(plotly)
+# Display the first few rows to check the result
+# head(df_gender)
 
-# Calculate the percentage of movies passing the Bechdel test by year
-df_trend <- df_unique %>%
-  group_by(Year) %>%
-  summarize(pass_rate = mean(Bechdel_binary == 1, na.rm = TRUE) * 100)
-
-# Create the interactive plot
-plot <- ggplot(df_trend, aes(x = Year, y = pass_rate)) +
-  geom_line(color = "blue") +
-  geom_point(color = "blue") +
-  labs(title = "Percentage of Movies Passing the Bechdel Test Over Time",
-       x = "Year", y = "Percentage Passing Bechdel Test") +
-  theme_minimal() + 
-  theme(plot.title = element_text(hjust = 0.5))
-
-ggplotly(plot)
+df_gender <- df_gender %>%
+  mutate(Director_gender = ifelse(Gender == 1, "Male", "Female"))
 ```
 
-## Gender of Director impact
+```{r,echo=FALSE, warning=FALSE}
 
-This part will explore how the gender of the director impact the data such as the budget, the revenue, the Imdb score, and the Bechedel test
-
-```{r}
-
-ggplot(
-  data = df_unique %>% filter(Gender %in% c(0, 1)),
-  mapping = aes(x = as.factor(Gender), fill = as.factor(Gender))
+# Create the ggplot
+plot <- ggplot(
+  data = df_gender,
+  mapping = aes(x = Director_gender, fill = Director_gender)
 ) +
   geom_bar(width = 0.5) +  # Set bar width here
   labs(
-    x = "Director Gender (1 = Male, 0 = Female)",  # Label for x-axis
+    x = "Director Gender",  # Label for x-axis
     y = "Count",                                   # Label for y-axis
     title = "Count of Films by Director Gender",
     fill = "Gender"
   ) +
-  scale_fill_manual(values = c("#DB9ADB", "#4062DB")) +  # Customize colors for each gender
+  scale_fill_manual(values = c("Female" = "#DB9ADB", "Male" = "#4062DB")) +  # Customize colors for each gender
   ylim(0, 2000) +  # Set y-axis limit
   theme_minimal() +
   theme(
     plot.title = element_text(hjust = 0.5),
     axis.text.x = element_text(size = 10),
-    axis.text.y = element_text(size = 10)
+    axis.text.y = element_text(size = 10),
+    legend.position = "right",  # Place legend on the right
+    legend.justification = "center"
   ) +
   geom_text(
     stat = "count",
-    aes(label = ..count..),  # Show count on top of each bar
-    vjust = -0.5,
+    aes(label = after_stat(count)),  # Updated from ..count.. to after_stat(count)
+    vjust = -3,  # Raise the count labels above the bars
     position = position_dodge(width = 0.5)  # Aligns text to center of each bar width
   )
 
+# Convert to an interactive plot with plotly
+interactive_plot <- ggplotly(plot)
+
+# Display the interactive plot
+interactive_plot
+
+
 ```
 
-```{r}
-# Director VS budget
-ggplot(
-  data = df_unique %>% filter(Gender %in% c(0, 1)),
-  mapping = aes(x = factor(Gender), y = log(Budget), fill = factor(Gender))
+In our dataset, only 7% of movies were directed by female directors, highlighting a significant gender disparity in the film industry. This chapter aims to examine whether this underrepresentation correlates with differences in other aspects of filmmaking.
+
+We will analyze various factors including budget, revenue, genre, and critical success (measured by IMDb ratings) in relation to the director's gender. Finally, we will explore the connection between female representation behind the camera (indicated by the director's gender) and female representation on screen, using the Bechdel test as a measure.
+
+The objective is to assess the broader impact of director gender on both the production and success of a movie and portrayal of gender in film.
+
+### The director's gender impact on budget
+
+```{r,echo=FALSE, warning=FALSE}
+plot <- ggplot(
+  data = df_gender,
+  mapping = aes(x = Director_gender, y = log(Budget), fill = Director_gender)
 ) +
   geom_boxplot(outlier.shape = NA) +  # Hide outliers if they clutter the plot
-  scale_fill_manual(values = c("0" = "#DB9ADB", "1" = "#4062DB")) +  # Color for male (0) and female (1)
-  labs(title = "Budget Distribution by Director Gender",
-       x = "Director Gender (1 = Male, 0 = Female)",
-       y = "Log of Budget",
-       fill = "Gender") +
+  scale_fill_manual(values = c("Female" = "#DB9ADB", "Male" = "#4062DB")) +  # Color for male (0) and female (1)
+  labs(
+    title = "Budget Distribution by Director Gender",
+    x = "Director's Gender",
+    y = "Log of Budget",
+    fill = "Gender"
+  ) +
   theme_minimal()
 
+# Convert the plot to an interactive plot
+interactive_plot <- ggplotly(plot)
+
+# Display the interactive plot
+interactive_plot
+
 ```
 
-**Gender vs Revenue**
+### Interpretation : Budget VS Gender
+
+This bloxplot shows that male directors get higher budget than the female counterparts.
+
+```{r}
+# Run a t-test to compare the mean log-transformed budget between male and female directors
+t_test_result <- t.test(log(Budget) ~ Director_gender, data = df_gender)
+
+# Display the result
+# t_test_result
+```
+
+The t-test results indicate that there is a statistically significant difference in mean budgets between movies directed by male and female directors, with male-directed movies receiving, on average, a higher budget. The p-value (\< 0.0001) and the confidence interval (entirely below 0) both support this conclusion, suggesting a meaningful difference in budget allocation based on the director's gender.
+
+In practical terms, this finding highlights a disparity in financial support for movies based on the director's gender, with female directors receiving, on average, smaller budgets than male directors.
+
+### The director's gender impact on Revenue
 
 ```{r}
 
-df_unique %>%
-  filter(Gender %in% c(0, 1)) %>%
-  group_by(Gender) %>%
+# Calculate mean and median revenue in millions
+revenue_summary <- df_gender %>%
+  group_by(Director_gender) %>%
   summarize(
-    Mean_Revenue = mean(Revenue, na.rm = TRUE),
-    Median_Revenue = median(Revenue, na.rm = TRUE),
+    Mean_Revenue_Millions = mean(Revenue / 1e6, na.rm = TRUE),
+    Median_Revenue_Millions = median(Revenue / 1e6, na.rm = TRUE),
     Count = n()
-  )
+  ) %>%
+  pivot_longer(cols = c(Mean_Revenue_Millions, Median_Revenue_Millions), names_to = "Statistic", values_to = "Revenue_Millions")
+
+# Set unique labels for combinations of Director_gender and Statistic for color mapping
+revenue_summary <- revenue_summary %>%
+  mutate(Color_Label = paste(Director_gender, Statistic, sep = "_"))
+
+# Plot the mean and median revenue in millions with custom colors
+plot <- ggplot(revenue_summary, aes(x = as.factor(Director_gender), y = Revenue_Millions, fill = Color_Label)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    x = "Director Gender",
+    y = "Revenue (in Millions)",
+    title = "Mean and Median Revenue by Director Gender (in Millions)",
+    fill = "Statistic"
+  ) +
+  scale_fill_manual(values = c(
+    "Female_Mean_Revenue_Millions" = "#DB9ADB",
+    "Female_Median_Revenue_Millions" = "#e35fe3",
+    "Male_Mean_Revenue_Millions" = "#4062DB",
+    "Male_Median_Revenue_Millions" = "#0d1bdb"
+  )) +
+  theme_minimal()
+
+
+# Convert the plot to an interactive plot
+interactive_plot <- ggplotly(plot)
+
+# Display the interactive plot
+interactive_plot
 ```
 
-### Genre of movies
+### Interpretation Revenue VS Gender
 
 ```{r}
-
-# What genre pass the test, we use df_final because we look at the genre column
-df_pass <- df_final %>%
-  filter(Bechdel_binary == 1)
-
-data_genre <- df_pass %>%
-  group_by(Genre) %>%
-  summarize(count = n()) %>%
-  mutate(percentage = count / sum(count) * 100)
-
-# Reorder Genre by percentage
-data_genre <- data_genre %>%
-  mutate(Genre = fct_reorder(Genre, percentage, .desc = TRUE))
-palette_21 <- c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854", 
-                "#ffd92f", "#e5c494", "#b3b3b3", "#1f78b4", "#33a02c", 
-                "#e31a1c", "#ff7f00", "#6a3d9a", "#b15928", "#a6cee3",
-                "#fb9a99", "#fdbf6f", "#cab2d6", "#ffff99", "#b2df8a", "#5A9BD5")
-# Plot with reordered genres
-ggplot(data_genre, aes(x = "", y = percentage, fill = Genre)) +
-  geom_bar(stat = "identity", width = 1) +
-  coord_polar("y") +
-  scale_fill_manual(values = palette_21) + 
-  labs(title = "Distribution of Genres Among Movies Passing the Bechdel Test",
-       fill = "Genre") +
-  theme_void() +
-  geom_text(aes(label = ifelse(percentage > 3, paste0(round(percentage, 1), "%"), "")),
-            position = position_stack(vjust = 0.5))
+# Run a t-test to compare the mean revenue between male and female directors
+t_test_result <- t.test(Revenue ~ Director_gender, data = df_gender)
+# Display the result
+# t_test_result
 
 ```
+
+The bar plot reveals a substantial disparity in movie revenues between male and female directors, indicating that films directed by women generate, on average, about half the revenue of those directed by men. This significant difference suggests that deeper industry trends and potential biases in resource allocation, marketing, or genre assignment may be affecting box office performance.
+
+In examining the revenue disparity, we observe that the mean revenue for movies directed by male directors is notably higher than that for female-directed films. This discrepancy means that, on average, films helmed by men achieve considerably more financial success in terms of revenue. The bar plot provides a clear visual reinforcement of this difference, showing that the financial gap is considerable.
+
+Statistical testing further supports the significance of this revenue difference, confirming that it is highly unlikely to have occurred by random chance. The t-test's low p-value (\<0.001) indicates that this gap is consistent enough across the sample to suggest a systematic pattern rather than an isolated anomaly. The implication here is that gender-based revenue differences are reflective of broader trends in the film industry, not just singular outliers.
+
+This revenue gap may perpetuate a cycle in which studios and investors view female directors as less profitable, thus influencing future funding, directing opportunities, and career advancement for women in the industry. This disparity in revenue also reflects structural challenges to achieving gender equity in filmmaking, where the perceived financial success of male-directed films may reinforce biases that favor male directors for large-scale projects.
+
+### The director's gender impact on Critical success
 
 ```{r}
+plot <- ggplot(
+  data = df_gender,
+  mapping = aes(x = Director_gender, y = Imdb_Rating, fill = Director_gender)
+) +
+  geom_boxplot(outlier.shape = NA) +  # Hide outliers if they clutter the plot
+  scale_fill_manual(values = c("Female" = "#DB9ADB", "Male" = "#4062DB")) +  # Color for male (0) and female (1)
+  labs(
+    title = "Budget Distribution by Director Gender",
+    x = "Director's Gender",
+    y = "Imdb Ratings",
+    fill = "Gender"
+  ) +
+  theme_minimal()
 
-# What about the ones that fail
-df_fail <- df_final %>%
-  filter(Bechdel_binary == 0)
+# Convert the plot to an interactive plot
+interactive_plot <- ggplotly(plot)
 
-data_genre <- df_fail %>%
-  group_by(Genre) %>%
-  summarize(count = n()) %>%
-  mutate(percentage = count / sum(count) * 100)
-
-# Reorder Genre by percentage
-data_genre <- data_genre %>%
-  mutate(Genre = fct_reorder(Genre, percentage, .desc = TRUE))
-
-palette_22 <- c("#8DA0CB", "#E78AC3", "#66C2A5", "#FC8D62", "#FFD92F", 
-                "#A6D854", "#B3B3B3", "#E5C494", "#FF7F00", "#1F78B4", 
-                "#6A3D9A", "#E31A1C", "#33A02C", "#CAB2D6", "#FB9A99",
-                "#A6CEE3", "#B15928", "#B2DF8A", "#5A9BD5", "#FFFF99", "#FDBF6F")
-
-# Plot with reordered genres
-ggplot(data_genre, aes(x = "", y = percentage, fill = Genre)) +
-  geom_bar(stat = "identity", width = 1) +
-  coord_polar("y") +
-  scale_fill_manual(values = palette_22) + 
-  labs(title = "Distribution of Genres Among Movies failing the Bechdel Test",
-       fill = "Genre") +
-  theme_void() +
-  geom_text(aes(label = ifelse(percentage > 3, paste0(round(percentage, 1), "%"), "")),
-            position = position_stack(vjust = 0.5))
+# Display the interactive plot
+interactive_plot
 ```
+
+### Interpretation Critical success VS Gender
+
+```{r}
+# Run a t-test to compare the mean revenue between male and female directors
+t_test_result <- t.test(Imdb_Rating ~ Director_gender, data = df_gender)
+# Display the result
+# t_test_result
+```
+
+The gender of a movie's director appears to significantly impact the film's critical success, as shown by a statistically significant difference in scores, with a p-value \<0.001. This low p-value indicates a very strong likelihood that the observed difference in critical success between male- and female-directed films is not due to chance alone but rather reflects a consistent pattern.\
+
+### The director's gender impact on the Bechdel test
 
 ```{r}
 
 # Calculate counts and percentages by Gender and Bechdel Test result
-data_gender_bechdel <- df_unique %>%
-  filter(Gender %in% c(0, 1)) %>%
-  group_by(Gender, Bechdel_binary) %>%
-  summarize(count = n()) %>%
-  group_by(Gender) %>%
+data_gender_bechdel <- df_gender %>%
+  group_by(Director_gender, Bechdel_binary) %>%
+  summarize(count = n(), .groups = "drop") %>%
+  group_by(Director_gender) %>%
   mutate(percentage = count / sum(count) * 100)
 
 # Plot
-ggplot(data_gender_bechdel, aes(x = as.factor(Gender), y = count, fill = as.factor(Bechdel_binary))) +
+plot <- ggplot(data_gender_bechdel, aes(x = as.factor(Director_gender), y = count, fill = as.factor(Bechdel_binary)))  +
   geom_bar(stat = "identity", width = 0.5, position = "fill") +  # Use position = "fill" for percentage stack
   labs(
-    x = "Director Gender (0 = Female, 1 = Male)",  # Label for x-axis
+    x = "Director Gender",  # Label for x-axis
     y = "Percentage of Movies",                    # Label for y-axis
     title = "Percentage of Films Passing the Bechdel Test by Director Gender",
     fill = "Bechdel Test Result\n(0 = Fail, 1 = Pass)"
@@ -814,6 +848,13 @@ ggplot(data_gender_bechdel, aes(x = as.factor(Gender), y = count, fill = as.fact
     color = "white",
     size = 3
   )
+
+# Convert the plot to an interactive plot
+interactive_plot <- ggplotly(plot)
+
+# Display the interactive plot
+interactive_plot
+
 
 ```
 
@@ -835,9 +876,75 @@ counts <- df_unique %>%
   ) %>%
   select(Gender_desc, Bechdel_binary_desc, count)  # Select only the semantic columns
 
-# Display the results with semantic descriptions on the left
-print(counts)
+# Display the results with semantic descriptions on the left 
+# print(counts)
 ```
+
+```{r}
+# Create a formatted table with gt
+counts_table <- counts %>%
+  gt() %>%
+  tab_header(
+    title = "Bechdel Test Results by Director Gender"
+  ) %>%
+  cols_label(
+    Gender_desc = "Director Gender",
+    Bechdel_binary_desc = "Bechdel Test Result",
+    count = "Count"
+  ) %>%
+  fmt_number(
+    columns = c(count),
+    decimals = 0  # No decimals for count
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels()
+  )
+
+# Display the table
+counts_table
+
+```
+
+### Interpretation Bechdel test VS Gender
+
+```{r}
+# Run a chi-squared test to compare Bechdel test results by Director gender
+table_data <- table(df_gender$Director_gender, df_gender$Bechdel_binary)
+chi_squared_test <- chisq.test(table_data)
+
+# Display the result
+# chi_squared_test
+```
+
+The identity of a movie's director significantly impacts nearly every aspect of the film, from its budget to its financial and critical success. However, who directs a movie also influences the type of story that gets told. Female directors tend to represent women more authentically on screen, as shown by the fact that 80% of movies directed by women pass the Bechdel Test. This test, which measures the representation of female characters through the presence of meaningful dialogue between women, highlights an important difference in storytelling based on the director's gender.
+
+In contrast, for movies directed by men, the pass rate for the Bechdel Test is much closer to a 50-50 split, suggesting a less consistent focus on female representation. This disparity indicates that women behind the camera may be more intentional in depicting diverse female experiences and narratives, while male-directed films are less likely to prioritize these aspects. Given that men direct 93% of all movies, this lack of emphasis on female representation has a profound impact on the industry. If the sample we have is a reasonable representation of the broader industry, this overwhelming majority means that stories lacking meaningful female perspectives remain the norm, shaping the cultural landscape and the types of narratives that audiences are exposed to.
+
+Ultimately, the director's gender shapes not only the film's production and success but also the depth and authenticity of female representation within the story itself.
+
+### Trend Analysis Over Time (Percentage of Movies Passing Bechdel Test)
+
+```{r}
+
+# Calculate the percentage of movies passing the Bechdel test by year
+df_trend <- df_unique %>%
+  group_by(Year) %>%
+  summarize(pass_rate = mean(Bechdel_binary == 1, na.rm = TRUE) * 100)
+
+# Create the interactive plot
+plot <- ggplot(df_trend, aes(x = Year, y = pass_rate)) +
+  geom_line(color = "blue") +
+  geom_point(color = "blue") +
+  labs(title = "Percentage of Movies Passing the Bechdel Test Over Time",
+       x = "Year", y = "Percentage Passing Bechdel Test") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplotly(plot)
+```
+
+This final graph shows that the percentage of films passing the Bechdel Test hasn\'t increased over time, despite growing calls for better representation. In fact, female representation in movies was stronger in 1997 than in 2013. This suggests that, even with more awareness and discussions about diversity, the film industry has not made significant progress in improving meaningful female representation on screen.
 
 ## Analysis
 
