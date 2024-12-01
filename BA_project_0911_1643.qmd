@@ -1,7 +1,7 @@
 ---
 title: "BA project"
 author:
- - Dayneth Calderon Flores, Ivana
+ - Calderon Flores, Ivana Dayneth
  - Jaouad, Dorra
  - Krafft, Mathilde
 institute: Université de Lausanne
@@ -60,9 +60,9 @@ In this section, we pose the following research questions to explore the potenti
 
 In this section, we outline the process of data collection and merging. The data sources for this project were obtained from data.world, where we can access to the following datasets:
 
--   **Dataset df:** It contains information regarding the Bechdel test outcomes for various films. The information was gather from BechdelTest.com and The-Numbers.com
+-   **Dataset df:** It contains information regarding the Bechdel test outcomes for various films. The information was gather from BechdelTest.com and The-Numbers.com. The dataset can be accessed directly from \[Dataset df\](https://raw.githubusercontent.com/brianckeegan/Bechdel/refs/heads/master/imdb_data.json)
 
--   **Dataset df2:** It includes additional film-related data, such as budget, revenue, genre, director, and awards. This information comes from the Imdb dataset.
+-   **Dataset df2:** It includes additional film-related data, such as budget, revenue, genre, director, and awards. This information comes from the Imdb dataset. The dataset can be accessed from the link: \[Dataset df2\](https://data.world/mahe432/movies/workspace/file?filename=IMDb+movies.csv)
 
 The two datasets were successfully merged into a single primary data frame using the IMDb ID as the key. This process resulted in a consolidated dataset comprising 1,792 rows. Specific columns of interest were selected to facilitate further analysis and ensure the relevance of the data to our research objectives.
 
@@ -77,6 +77,7 @@ library(ggplot2)
 library(plotly)
 library(DT)
 library(gt)
+library(kableExtra)
 ```
 
 ```{r}
@@ -264,65 +265,49 @@ df_final <- na.omit(df_final)
 
 9.  **Variables and Descriptions after the cleaning**
 
--   **Year (Release Date)**\
-    • **Description**: The year when the film was released to the public.\
-    • **Type**: Integer.
+    ```{r}
+    # Create a data frame to display the variables and their descriptions
+    variables <- data.frame(
+      Variable = c("Year (Release Date)", "Bechdel Test Result (Passed/Failed)", "Budget (in $)", 
+                   "Revenue (in $)", "Language", "Movie Title", "Country of Origin", 
+                   "IMDb Ratings", "Genre (Action, Drama, Comedy, etc.)", "IMDb Votes", 
+                   "Wins", "Nominations", "Gender (Director’s Gender)", "Director Name", 
+                   "Bechdel Binary"),
+      Description = c("The year when the film was released to the public.",
+                      "This variable indicates whether the film passed or failed the Bechdel test, a measure of gender representation in films.",
+                      "The production budget of the film in U.S. dollars, adjusted for inflation to reflect 2013 dollar values.",
+                      "The total revenue or box office earnings of the film in U.S. dollars, adjusted for inflation to 2013 prices.",
+                      "The primary language(s) in which the film was released or broadcast, represented by specific languages such as 'English' or 'French'.",
+                      "The name of the film, provided as text.",
+                      "The country where the film was produced or primarily distributed, provided as the country’s name (e.g., 'USA', 'France').",
+                      "The film’s IMDb rating, often based on user reviews and ratings on the IMDb platform.",
+                      "The primary genre(s) describing the film, such as Action, Drama, or Comedy.",
+                      "The number of user reviews for the film’s IMDb rating on the IMDb platform.",
+                      "The number of awards the film has won (e.g., 'Golden Globe', 'Oscar').",
+                      "The number of nominations for awards the film has received.",
+                      "The gender of the film’s director.",
+                      "The name of the director of the film.",
+                      "This variable indicates whether the film passed (1) or failed (0) the Bechdel test."),
+      Type = c("Integer", "Categorical/factor with possible values 'Passed' or 'Failed'.", "Numeric, stored as an integer.",
+               "Numeric", "Categorical/factor", "Text (Character)", "Categorical/factor", "Numeric", 
+               "Categorical/factor", "Numeric", "Numeric", "Numeric", "Categorical/factor", "Text (Character)",
+               "Categorical/factor with possible values 'Passed = 1' or 'Failed = 0'.")
+    )
 
--   **Bechdel Test Result (Passed/Failed)**\
-    • **Description**: This variable indicates whether the film passed or failed the Bechdel test, a measure of gender representation in films.\
-    • **Type**: Categorical/factor with possible values "Passed" or "Failed."
 
--   **Budget (in \$)**\
-    • **Description**: The production budget of the film in U.S. dollars, adjusted for inflation to reflect 2013 dollar values.\
-    • **Type**: Numeric, stored as an integer.
 
--   **Revenue (in \$)**\
-    • **Description**: The total revenue or box office earnings of the film in U.S. dollars, adjusted for inflation to 2013 prices.\
-    • **Type**: Numeric.
+    # Create a styled table with kableExtra
+    variables %>%
+      kable("html", escape = FALSE, caption = "Variables and Descriptions after Cleaning", align = "c") %>%
+      kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "responsive")) %>%
+      column_spec(1, bold = TRUE, color = "white", background = "#0095C8") %>%  # Style the Variable column
+      column_spec(2, width = "30em") %>%  # Customize the width for the Description column
+      column_spec(3, width = "15em") %>%  # Customize the width for the Type column
+      row_spec(0, bold = TRUE, font_size = 14, color = "white", background = "#0095C8") %>%
+      add_header_above(c(" " = 1, "Variable Details" = 2))
 
--   **Language**\
-    • **Description**: The primary language(s) in which the film was released or broadcast, represented by specific languages such as "English" or "French."\
-    • **Type**: Categorical/factor.
 
--   **Movie Title**\
-    • **Description**: The name of the film, provided as text.\
-    • **Type**: Text (Character).
-
--   **Country of Origin**\
-    • **Description**: The country where the film was produced or primarily distributed, provided as the country's name (e.g., "USA", "France").\
-    • **Type**: Categorical/factor.
-
--   **IMDb Ratings**\
-    • **Description**: The film's IMDb rating, often based on user reviews and ratings on the IMDb platform.\
-    • **Type**: Numeric.
-
--   **Genre (Action, Drama, Comedy, etc.)**\
-    • **Description**: The primary genre(s) describing the film, such as Action, Drama, or Comedy.\
-    • **Type**: Categorical/factor.
-
--   **IMDb Votes**\
-    • **Description**: The number of user reviews for the film's IMDb rating on the IMDb platform.\
-    • **Type**: Numeric.
-
--   **Wins**\
-    • **Description**: The number of awards the film has won (e.g., "Golden Globe", "Oscar").\
-    • **Type**: Numeric.
-
--   **Nominations**\
-    • **Description**: The number of nominations for awards the film has received.\
-    • **Type**: Numeric.
-
--   **Gender (Director's Gender)**\
-    • **Description**: The gender of the film's director.\
-    • **Type**: Categorical/factor.
-
--   **Director Name**\
-    • **Description**: The name of the director of the film.\
-    • **Type**: Text (Character).
-
--   **Bechdel Binary**\
-    • **Description**: This variable indicates whether the film passed (1) or failed (0) the Bechdel test.\
-    • **Type**: Categorical/factor with possible values "Passed = 1" or "Failed = 0."
+    ```
 
 ## Exploratory Data Analysis
 
@@ -986,6 +971,34 @@ In the analysis phase, we aim to applie statistical models to investigate the re
     #### Conclusion:
 
     While there is a statistically significant relationship between passing the Bechdel Test and revenue, the effect size is minimal, suggesting that passing the test is not a strong predictor of a film's financial performance. This finding implies that other factors (such as budget, genre, and marketing) likely play a much more substantial role in determining a film's revenue than its performance on the Bechdel Test.
+
+    ```{r}
+    # Convert necessary columns to numeric or factor
+    df_unique$Bechdel_test_result <- as.numeric(df_unique$Bechdel_test_result)
+    df_unique$Revenue <- as.numeric(df_unique$Revenue)
+    df_unique$Budget <- as.numeric(df_unique$Budget)
+    df_unique$IMDB_Ratings <- as.numeric(df_unique$Imdb_Rating)
+    df_unique$Gender <- as.factor(df_unique$Gender)
+
+
+    # Fit a multiple linear regression model
+    # Response variable: Bechdel_test_result
+    # Predictors: All other variables
+    regression_model <- lm(Bechdel_test_result ~ Revenue + Budget + IMDB_Ratings + Gender, data = df_unique)
+
+    # Print the summary of the regression model
+    summary(regression_model)
+    ```
+
+The model reveals some significant predictors of the Bechdel test results:
+
+1.  **Budget**: Higher-budget films are less likely to pass the Bechdel test, possibly reflecting systemic biases in larger productions.
+
+2.  **IMDb Ratings**: Higher-rated films are less likely to pass, which may suggest that audience preferences correlate with narratives that do not emphasize gender representation.
+
+3.  **Director’s Gender**: Films directed by Gender1 (Male) and Gender3 (Binary) are less likely to pass the test compared to the baseline group (Gender2).
+
+Despite these findings, the model's explanatory power is weak (R² = 7%), indicating that there are likely other unmeasured factors influencing the Bechdel test outcomes. Further exploration, such as including additional variables or refining the data, could provide more insights.
 
 **Logistic Regression for Awards and IMDb Ratings**
 
