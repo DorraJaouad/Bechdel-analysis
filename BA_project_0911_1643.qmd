@@ -23,7 +23,7 @@ editor: visual
 
 ## Background and Motivation
 
-The Bechdel Test serves as a widely recognized measure of female representation in films, highlighting important discussions surrounding diversity and gender equality within the film industry. This topic is significant as it not only addresses the representation of women but also engages with broader societal issues such as gender stereotypes and equity.
+The Bechdel Test serves as a widely recognized measure of female representation in films. To pass the test, a movie must have at least two named female characters who talk to each other of something other than a man. This test is highlighting important discussions surrounding diversity and gender equality within the film industry. This topic is significant as it not only addresses the representation of women but also engages with broader societal issues such as gender stereotypes and equity.
 
 The intersection of cultural metrics, exemplified by the Bechdel Test, and economic variables, including a film's budget and revenue, renders this research particularly compelling. By exploring how diversity impacts a film's commercial and critical success, the study examines two key dimensions: cultural representation and its potential economic and critical consequences.
 
@@ -749,44 +749,28 @@ In practical terms, this finding highlights a disparity in financial support for
 ### The director's gender impact on Revenue
 
 ```{r}
-
-# Calculate mean and median revenue in millions
-revenue_summary <- df_gender %>%
-  group_by(Director_gender) %>%
-  summarize(
-    Mean_Revenue_Millions = mean(Revenue / 1e6, na.rm = TRUE),
-    Median_Revenue_Millions = median(Revenue / 1e6, na.rm = TRUE),
-    Count = n()
-  ) %>%
-  pivot_longer(cols = c(Mean_Revenue_Millions, Median_Revenue_Millions), names_to = "Statistic", values_to = "Revenue_Millions")
-
-# Set unique labels for combinations of Director_gender and Statistic for color mapping
-revenue_summary <- revenue_summary %>%
-  mutate(Color_Label = paste(Director_gender, Statistic, sep = "_"))
-
-# Plot the mean and median revenue in millions with custom colors
-plot <- ggplot(revenue_summary, aes(x = as.factor(Director_gender), y = Revenue_Millions, fill = Color_Label)) +
-  geom_bar(stat = "identity", position = "dodge") +
+# Assuming df_gender contains the Revenue and Director_gender columns
+boxplot <- ggplot(df_gender, aes(x = as.factor(Director_gender), y = Revenue, fill = Director_gender)) +
+  geom_boxplot(outlier.color = "red", outlier.shape = 16, alpha = 0.7) +
   labs(
     x = "Director Gender",
-    y = "Revenue (in Millions)",
-    title = "Mean and Median Revenue by Director Gender (in Millions)",
-    fill = "Statistic"
+    y = " Log Revenue ",
+    title = "Revenue Distribution by Director Gender (Logarithmic Scale)"
   ) +
+  scale_y_log10() + # Apply logarithmic scale
   scale_fill_manual(values = c(
-    "Female_Mean_Revenue_Millions" = "#DB9ADB",
-    "Female_Median_Revenue_Millions" = "#e35fe3",
-    "Male_Mean_Revenue_Millions" = "#4062DB",
-    "Male_Median_Revenue_Millions" = "#0d1bdb"
+    "Female" = "#DB9ADB",
+    "Male" = "#4062DB"
   )) +
   theme_minimal()
 
 
 # Convert the plot to an interactive plot
-interactive_plot <- ggplotly(plot)
+interactive_boxplot <- ggplotly(boxplot)
 
-# Display the interactive plot
-interactive_plot
+# Display the interactive box plot
+interactive_boxplot
+
 ```
 
 ### Interpretation Revenue VS Gender
