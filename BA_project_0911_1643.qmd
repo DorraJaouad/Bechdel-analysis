@@ -1046,21 +1046,51 @@ logit_model <- glm(Bechdel_binary ~  Budget +
                      Nominations + Director_gender + Revenue ,
                    family = binomial(link = "logit"), data = df_gender)
 
-# Summarize the logistic regression model
-summary(logit_model)
+# Extract and format the model summary
+# Extract and format the model summary
+logit_summary <- tidy(logit_model) %>%
+  mutate(Significant = ifelse(p.value < 0.05, "Yes", "No")) %>%
+  select(
+    Term = term, 
+    Estimate = estimate, 
+    StdError = std.error, 
+    `z-value` = statistic, 
+    `p-value` = p.value, 
+    Significant
+  )
+
+
+# Display results in a styled table
+logit_summary %>%
+  kable("html", caption = "Logistic Regression Results") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
 ```
 
 Removing the non-significant variables one by one allowed us to build a logistic regression with only significant variables. Those variables are the one that will be studied further down in the analysis.
 
 ```{r}
 # Build the logistic regression model
-logit_model <- glm(Bechdel_binary ~  Budget + 
-                      + Imdb_Rating + Imdb_Votes + Genre + 
-                     Nominations + Director_gender ,
+logit_model <- glm(Bechdel_binary ~ Budget + 
+                      Imdb_Rating + Imdb_Votes + Genre + 
+                      Nominations + Director_gender,
                    family = binomial(link = "logit"), data = df_gender)
 
-# Summarize the logistic regression model
-summary(logit_model)
+# Extract meaningful results and filter significant rows
+logit_summary <- tidy(logit_model) %>%
+  mutate(Significant = ifelse(p.value < 0.05, "Yes", "No")) %>%
+  select(
+    Term = term, 
+    Estimate = estimate, 
+    StdError = std.error, 
+    `z-value` = statistic, 
+    `p-value` = p.value, 
+    Significant
+  )
+
+# Print as a nice table
+logit_summary %>%
+  kable("html", caption = "Significant Logistic Regression Results") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
 ```
 
 The logistic regression analysis identified Budget, IMDb Rating, IMDb Votes, Nominations, and Director Gender as statistically significant predictors of whether a movie passes the Bechdel test. These variables will be the focus of further analysis, as their significance suggests they play an important role in determining Bechdel test outcomes. Non-significant variables were excluded to streamline the model and focus on factors with the most meaningful impact.
