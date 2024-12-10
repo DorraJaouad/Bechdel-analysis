@@ -18,7 +18,9 @@ format:
 editor: visual
 ---
 
-## 1. Background and Motivation
+# 1. Introduction
+
+## 1.1 Background and motivation
 
 The Bechdel Test serves as a widely recognized measure of female representation in films. To pass the test, a movie nmust have at least two named female characters who talk to each other of something other than a man. This test is highlighting important discussions surrounding diversity and gender equality within the film industry. This topic is significant as it not only addresses the representation of women but also engages with broader societal issues such as gender stereotypes and equity.
 
@@ -26,9 +28,9 @@ The intersection of cultural metrics, exemplified by the Bechdel Test, and econo
 
 This research aligns with the overarching goal of leveraging data-driven insights to comprehend the effects of cultural dynamics on creative industries. Through a combination of statistical, predictive, and exploratory analyses, the project aims to address questions of both social significance and commercial relevance.
 
-## 2. Project Objectives
+## 1.2 Project Objectives
 
-### 2.1 Main Objective
+### 1.2.1 Main Objective
 
 The primary objective of this project is to investigate the relationship between the Bechdel Test and other film-related factors, such as budget, genre, and director, on a film's revenue. The specific aims include:
 
@@ -36,7 +38,7 @@ The primary objective of this project is to investigate the relationship between
 
 -   Assessing if films that pass the Bechdel Test tend to win more awards or achieve higher IMDb ratings.
 
-### 2.2 Sub-goals
+### 1.2.2 Sub-goals
 
 1.  **Predictive Modeling:** Developing a predictive model to estimate a film's success based on various factors, including the Bechdel Test result, its correlation with awards, and IMDb ratings. This model will provide insights into the probability of a film passing the Bechdel Test based on attributes such as budget, genre, and director.
 
@@ -44,7 +46,7 @@ The primary objective of this project is to investigate the relationship between
 
 3.  **Trend Visualization:** Visualizing trends between films that either pass or fail the Bechdel Test and their associated economic data, including revenues, budgets, awards won, and IMDb ratings. This visualization will help elucidate the relationship between female representation and film success.
 
-## 3. Research Questions
+## 1.3. Research Questions
 
 In this section, we pose the following research questions to explore the potential influence of female representation in films on commercial and critical success. By examining correlations between Bechdel Test results and metrics like revenue, awards, and IMDb ratings, we aim to identify patterns that link gender diversity with performance outcomes. Additionally, we explore predictive models to assess whether factors such as budget, genre, and director can reliably estimate both a film's success and its likelihood of passing the Bechdel Test. These questions guide our analysis to uncover data-driven insights into the economic and critical impact of gender representation in the film industry.
 
@@ -53,7 +55,7 @@ In this section, we pose the following research questions to explore the potenti
 3.  Can we build a predictive model to estimate a film's success (revenue, awards, IMDb ratings) based on the Bechdel test results and other factors like budget, genre, and director?
 4.  Can we develop a predictive model to determine whether a film will pass the Bechdel test based on factors such as budget, genre, and director?
 
-## 4. Data Collection
+## 1.4. Data Collection
 
 In this section, we outline the process of data collection and merging. The data sources for this project were obtained from data.world, where we can access to the following datasets:
 
@@ -78,6 +80,7 @@ library(kableExtra)
 library(caret)
 library(pROC)
 library(randomForest)
+library(broom)
 ```
 
 ```{r}
@@ -94,11 +97,11 @@ merged_data <- merge(df2, df, by.x = "imdb", by.y = "imdbID", all = FALSE)
 df_final <- subset(merged_data, select = -c(domgross_2013.,Writer,Year, Actors, imdb, title, test, clean_test, domgross, intgross, Plot, code, period.code,decade.code, budget, Rated, Response, Metascore, Released, Runtime, Type, Poster, Error ))
 ```
 
-## 5. Data Cleaning
+# 2. Data Cleaning
 
 In the data cleaning section, we ensure the dataset is prepared for effective analysis by addressing any inconsistencies, missing values, and irrelevant entries. This process involves examining each variable to standardize formats, handle null values, and remove duplicates, ultimately enhancing the accuracy and reliability of the Exploratory Data Analysis and modeling phases. By refining the dataset, we lay a strong foundation for meaningful insights and trustworthy results in subsequent analyses.
 
-### 5.1 Standardizing Column Names
+## 2.1 Standardizing Column Names
 
 This section focuses on renaming columns to create a consistent and clear naming convention across the dataset, ensuring easier readability and usability for analysis.
 
@@ -135,7 +138,7 @@ columns_mapping %>%
 
 ```
 
-### 5.2 Isolating Individual Values by Language, Genre, and Director
+## 2.2 Isolating Individual Values by Language, Genre, and Director
 
 Here, we separated entries with multiple values in the *Language*, *Genre*, and *Director* columns, creating distinct rows for each value. This transformation enables more granular analysis by ensuring each entry corresponds to a single language, genre, or director.
 
@@ -155,7 +158,7 @@ df_final <- df_final %>%
 
 ```
 
-### 5.3 Extracting and Summarizing Award Wins, Nominations, and Creating a New Column for Award Status
+## 2.3 Extracting and Summarizing Award Wins, Nominations, and Creating a New Column for Award Status
 
 We parsed the awards column to isolate and categorize Oscar and other award wins and nominations. We then created a new binary column, awards, which indicates whether the film has won any award (1 for wins, 0 for no wins). Additionally, we extracted the relevant numerical values for Wins and Nominations into separate columns to enable a more detailed analysis of the film's award performance. To streamline the dataset, unnecessary intermediate columns were removed, focusing on the most important award-related variables.
 
@@ -206,7 +209,7 @@ df_final <- df_final %>%
   mutate(Awards = factor(ifelse(Wins > 0, 1, 0), levels = c(0, 1)))
 ```
 
-### 5.4 Integrating Director Gender for Analysis
+## 2.4 Integrating Director Gender for Analysis
 
 To explore the potential impact of a director's gender on a film's performance in the Bechdel Test, we extended our dataset by merging it with an external table that maps names to gender. The link associated to this data is the following: [Gender dataset](https://query.data.world/s/vosjabgwxpybit5vkwjkyv7przl6km?dws=00000) . This table associates names with specific genders, where:
 
@@ -270,7 +273,7 @@ datatable(director_gender_data,
   )
 ```
 
-### 5.5 Converting Bechdel Test Results to Binary Format
+## 2.5 Converting Bechdel Test Results to Binary Format
 
 We create a binary column, bechdel_binary , to indicate whether each film passed the Bechdel Test, where a "PASS" result is represented as **`1`** and a "FAIL" result as **`0`**. This binary format allows for easier analysis and statistical modeling.
 
@@ -279,7 +282,7 @@ We create a binary column, bechdel_binary , to indicate whether each film passed
 df_final$Bechdel_binary <- as.factor(ifelse(df_final$Bechdel_test_result == "PASS", 1, 0))
 ```
 
-### 5.6 Ensuring Correct Variable Types for Exploratory Data Analysis
+## 2.6 Ensuring Correct Variable Types for Exploratory Data Analysis
 
 To prepare for exploratory data analysis, we set appropriate data types for each variable. *Gender*, *Genre*, *Language*, *Country_of_Origin*, *Bechdel_test_result*, and *Bechdel_binary* are converted to categorical variables, while *Revenue*, *Imdb_Rating*, and *Imdb_Votes* are transformed to numeric types for accurate calculations.
 
@@ -307,7 +310,7 @@ kable(variable_types, "html", col.names = c("Variable", "Type"), row.names = FAL
 
 ```
 
-### 5.7 Handling Missing Values
+## 2.7 Handling Missing Values
 
 After checking for missing values, we find that Revenue, Score and Gender have some `NA` entries. Since these missing values could impact analysis, we remove rows with any `NA` values to maintain data integrity in the final dataset.
 
@@ -342,7 +345,7 @@ summary_table %>%
 df_final<- na.omit(df_final)
 ```
 
-### 5.8 Variables and Descriptions after the cleaning
+## 2.8 Variables and Descriptions after the cleaning
 
 ```{r}
 # Create a data frame to display the variables and their descriptions
@@ -388,7 +391,7 @@ variables %>%
 
 ```
 
-### 5.9 Summary of Data Cleaning
+## 2.9 Summary of Data Cleaning
 
 **Key Cleaning Steps**:
 
@@ -408,11 +411,11 @@ variables %>%
 
 -   Prepared the foundation for examining gender representation and its impact on film success.
 
-## 6. Exploratory Data Analysis
+# 3. Exploratory Data Analysis
 
 This exploratory analysis aims to uncover relationships between female representation in films, as measured by the Bechdel test, and their commercial success as indicated by revenue and awards. By visualizing the data and assessing correlations among these variables, we can gain insights into the impact of diversity in film on its critical and financial performance.
 
-### 6.1 General Summary of the Data
+## 3.1 General Summary of the Data
 
 1.  **Creating a Deduplicated Dataset for Analysis**\
     In this step, we create a deduplicated dataset based on unique film titles. This dataset will be used for analysis in all columns except for *Genre* and *Language*. By grouping the data by *Movie_Title* and selecting the first occurrence of each variable, we ensure that only one entry per film is considered for analysis. We then summarize the dataset to count the number of distinct values in each column, providing an overview of the diversity within the data.
@@ -490,7 +493,7 @@ numerical_summary_table
 
 ### 
 
-### 6.2 Correlation Heatmap
+## 3.2 Correlation Heatmap
 
 In this step, we present a correlation heat-map that displays the relationships between all numeric and factor variables: **Year, Revenue, Nominations, Imdb_Votes, Imdb_Rating, Budget, Bechdel_binary** and **Awards**. By examining the correlation coefficients between these variables, this heatmap provides insights into the degree and direction of association among financial, critical, and award-related metrics. Positive correlations indicate that as one variable increases, the other tends to increase as well, while negative correlations suggest an inverse relationship. This visualization serves as a preliminary analysis, helping us identify which factors are most closely linked, and providing a basis for further exploration of the economic and critical impacts of female representation in films.
 
@@ -541,7 +544,7 @@ ggplotly(heatmap)
 
 While there is no direct relationship between passing the Bechdel Test and awards or ratings, movies with higher IMDb ratings and more nominations tend to perform better in terms of awards. The Bechdel Test result might not directly impact these metrics but could be indirectly linked to other qualitative factors.
 
-### 6.3 Revenue Distribution by Bechdel Test Outcome
+## 3.3 Revenue Distribution by Bechdel Test Outcome
 
 In this step, we examine the distribution of movie revenues based on whether films pass or fail the Bechdel Test. Using a violin plot overlaid with boxplots, we visualize the log-transformed revenue to handle any large variances in revenue data, which allows us to better observe patterns across Bechdel Test outcomes. This visualization helps us assess whether movies that pass the Bechdel Test tend to have different revenue distributions compared to those that fail, providing preliminary insights into the financial impact of female representation in films.
 
@@ -579,9 +582,27 @@ ggplotly(plot)
 
 According this violin plot that illustrates the revenue distribution for films based on their Bechdel Test results. Films that **fail the Bechdel Test** generally show a **higher median revenue** compared to those that pass. Additionally, the revenue distribution for failing films has greater variability, with some reaching notably high revenues, while others fall to lower extremes, as shown by the extended tails of the violin plot. In contrast, films that **pass the Bechdel Test** have a more condensed revenue distribution, indicating less variability and a slightly lower median revenue.
 
-Overall, this suggests that films failing the Bechdel Test may achieve higher revenues on average, though the reasons behind this trend likely involve other factors, such as genre or marketing, which would require further analysis to clarify.
+Overall, this suggests that films failing the Bechdel Test may achieve higher revenues on average, though the reasons behind this trend likely involve other factors, such as genre or marketing, which would require further analysis to clarify. Tho the ANOVA test shows that the difference isn't significative.
 
-### 6.4 Revenue Distribution by Genre and Bechdel Test Outcome
+**Anova Analysis**
+
+```{r}
+# Hypothesis test: ANOVA
+anova_test <- aov(Revenue ~ as.factor(Bechdel_test_result), data = df_unique)
+anova_summary <- summary(anova_test)
+print(anova_summary)
+
+# Interpretation of ANOVA results
+if (anova_summary[[1]]$`Pr(>F)`[1] < 0.05) {
+  cat("The ANOVA test indicates that there is a statistically significant difference in revenue between the Bechdel Test groups.\n")
+} else {
+  cat("The ANOVA test suggests no statistically significant difference in revenue between the Bechdel Test groups.\n")
+}
+
+
+```
+
+## 3.4 Revenue Distribution by Genre and Bechdel Test Outcome
 
 In this section we use a boxplot that compares film revenues across different genres, with results segmented by whether the films pass or fail the Bechdel Test.
 
@@ -616,7 +637,7 @@ ggplotly(plot)
 
 The plot suggests that while revenue varies significantly across genres, the Bechdel Test result does not have a consistent impact on revenue within each genre. Certain genres like Adventure, Sci-Fi, and Action show generally higher revenues, but this trend appears irrespective of the Bechdel Test outcome.
 
-### 6.5 Revenue vs. IMDb Rating Scatter Plot with Bechdel Test Outcome
+## 3.5 Revenue vs. IMDb Rating Scatter Plot with Bechdel Test Outcome
 
 This scatter plot visualization provides insight into the relationship between a film's IMDb rating and its revenue, while highlighting the results of the Bechdel Test as a key variable. It aims to observe any trends in rating and revenue associated with gender representation. A smooth trend line added to the data helps to highlight overarching patterns, while a logarithmic scale on the revenue axis accounts for the large revenue disparities often found across films.
 
@@ -640,7 +661,7 @@ ggplotly(p)
 
 Passing the Bechdel Test does not appear to have a major impact on revenue, as both passing and failing movies follow similar trends in terms of IMDb Rating and Revenue. Instead, IMDb rating itself seems to be the stronger indicator of revenue potential across both groups, though this effect is relatively modest
 
-### 6.6 Wins by Bechdel Test Result
+## 3.6 Wins by Bechdel Test Result
 
 ```{r}
 
@@ -664,7 +685,7 @@ summary_stats
 
 We see that failing the test is more common. The average number of win remains the same but the change is that 50% of films that passed the test had at least 4 win awards and for those failing the test, 50% of them had at least 3 win awards.
 
-### 6.7 Awards by Bechdel Test Result
+## 3.7 Awards by Bechdel Test Result
 
 ```{r,echo=FALSE, warning=FALSE}
 # Create the interactive plot
@@ -694,7 +715,75 @@ ggplotly(plot)
 
 Passing the Bechdel Test does not seem to be a strong indicator of receiving awards, as the difference in median awards is minimal. However, movies passing the test have a slightly broader range of awards.
 
-### 6.8 IMDb Ratings by Bechdel Test Result
+**Awards: Chi-Square Test for Independence**
+
+This test evaluates whether the distribution of Awards (binary) differs by Bechdel Test Result
+
+```{r}
+# Create a contingency table for awards and Bechdel_test_result
+contingency_table <- table(df_unique$Awards, df_unique$Bechdel_test_result)
+
+# Perform Chi-square test for independence
+chi_square_test <- chisq.test(contingency_table)
+print(chi_square_test)
+
+# Interpretation of Chi-Square results
+if (chi_square_test$p.value < 0.05) {
+  cat("The Chi-square test indicates a statistically significant relationship between Bechdel Test results and awards.\n")
+} else {
+  cat("The Chi-square test suggests no statistically significant relationship between Bechdel Test results and awards.\n")
+}
+```
+
+## 3.8 Nominations by Bechdel Test Result
+
+```{r}
+
+library(ggplot2)
+library(plotly)
+# Create the interactive plot for Nominations
+plot_nominations <- ggplot(df_unique, aes(x = Bechdel_binary, y = Nominations, fill = Bechdel_binary)) +
+  geom_boxplot(outlier.shape = NA) +
+  labs(title = "Nominations by Bechdel Test Result",
+       x = "Bechdel Test Result", 
+       y = "Number of Nominations",
+       fill = "Bechdel Test Result\n(0 = Fail, 1 = Pass)") +
+  scale_fill_manual(values = c("0" = "#957BE0", "1" = "#77E0C3")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylim(0, 50) +  # Adjust y-axis limits for Nominations
+  # Add text annotation with statistics
+  annotate("text", 
+           x = 1:2, 
+           y = 50,  # Position the text at the top of the y-axis
+           label = paste("Mean:", round(tapply(df_final$Nominations, df_final$Bechdel_binary, mean, na.rm = TRUE), 2),
+                         "\nMedian:", round(tapply(df_final$Nominations, df_final$Bechdel_binary, median, na.rm = TRUE), 2)),
+           vjust = -0.5)
+
+# Convert ggplot to interactive plotly
+ggplotly(plot_nominations)
+
+```
+
+Interpretation : Movies that pass the Bechdel Test and those that fail have nearly identical mean and median nominations, indicating no significant difference in recognition between the two groups. Both groups show a similar spread of nominations, with numerous outliers representing highly nominated movies.
+
+**Anova Analysis**
+
+```{r}
+# ANOVA for Nomiantions by Bechdel_test_result
+anova_Nominations <- aov(Nominations ~ as.factor(Bechdel_test_result), data = df_unique)
+anova_summary_nominations <- summary(anova_Nominations)
+print(anova_summary_nominations)
+
+# Interpretation of ANOVA results for IMDb ratings
+if (anova_summary_nominations[[1]]$`Pr(>F)`[1] < 0.05) {
+  cat("The ANOVA test indicates a statistically significant difference in Nominations between Bechdel Test groups.\n")
+} else {
+  cat("The ANOVA test suggests no statistically significant difference in Nominations between Bechdel Test groups.\n")
+}
+```
+
+## 3.9 IMDb Ratings by Bechdel Test Result
 
 ```{r}
 # Create the interactive plot
@@ -713,7 +802,23 @@ ggplotly(plot)
 
 Movies that pass the Bechdel Test tend to have marginally better IMDb ratings, indicating a potential audience or critical preference for movies meeting the criteria.
 
-### 6.9 Director's gender impact
+**Anova** : This test checks if the mean IMDb ratings differ significantly by Bechdel_test_result.
+
+```{r}
+# ANOVA for IMDb ratings by Bechdel_test_result
+anova_imdb <- aov(Imdb_Rating ~ as.factor(Bechdel_test_result), data = df_unique)
+anova_summary_imdb <- summary(anova_imdb)
+print(anova_summary_imdb)
+
+# Interpretation of ANOVA results for IMDb ratings
+if (anova_summary_imdb[[1]]$`Pr(>F)`[1] < 0.05) {
+  cat("The ANOVA test indicates a statistically significant difference in IMDb ratings between Bechdel Test groups.\n")
+} else {
+  cat("The ANOVA test suggests no statistically significant difference in IMDb ratings between Bechdel Test groups.\n")
+}
+```
+
+## 3.10 Director's gender impact
 
 This section will examine how the director's gender influences various aspects of the data, including budget, revenue, IMDb score, and the Bechdel test results.
 
@@ -779,7 +884,7 @@ We will analyze various factors including budget, revenue, genre, and critical s
 
 The objective is to assess the broader impact of director gender on both the production and success of a movie and portrayal of gender in film.
 
-### 6.10 The Director's gender impact on budget
+### 3.10.1 The Director's gender impact on budget
 
 ```{r,echo=FALSE, warning=FALSE}
 plot <- ggplot(
@@ -810,7 +915,7 @@ This bloxplot shows that male directors get higher budget than the female counte
 
 In practical terms, this finding highlights a disparity in financial support for movies based on the director's gender, with female directors receiving, on average, smaller budgets than male directors.
 
-### 6.11 The Director's gender impact on Revenue
+### 3.10.2 The Director's gender impact on Revenue
 
 ```{r}
 
@@ -826,8 +931,6 @@ boxplot <- ggplot(df_gender, aes(x = as.factor(Director_gender), y = Revenue, fi
   scale_y_log10() + # Apply logarithmic scale
   scale_y_log10() + # Apply logarithmic scale
   scale_fill_manual(values = c(
-    "Female" = "#DB9ADB",
-    "Male" = "#4062DB",
     "Female" = "#DB9ADB",
     "Male" = "#4062DB"
   )) +
@@ -850,7 +953,7 @@ In examining the revenue disparity, we observe that the mean revenue for movies 
 
 This revenue gap may perpetuate a cycle in which studios and investors view female directors as less profitable, thus influencing future funding, directing opportunities, and career advancement for women in the industry. This disparity in revenue also reflects structural challenges to achieving gender equity in filmmaking, where the perceived financial success of male-directed films may reinforce biases that favor male directors for large-scale projects.
 
-### 6.11 The Director's gender impact on Critical success
+### 3.10.3 The Director's gender impact on Critical success
 
 ```{r}
 plot <- ggplot(
@@ -878,7 +981,7 @@ interactive_plot
 
 According to this graph female directors tend to have a narrower range of IMDb Ratings with fewer extreme outliers, while male directors show a wider distribution with several lower-rated outliers. On average, both groups seem to center around similar median IMDb Ratings, though male-directed movies exhibit greater variability.\
 
-### 6.12 The Director's gender impact on the Bechdel test
+### 3.10.4 The Director's gender impact on the Bechdel test
 
 ```{r}
 
@@ -977,7 +1080,7 @@ In contrast, for movies directed by men, the pass rate for the Bechdel Test is m
 
 Ultimately, the director's gender shapes not only the film's production and success but also the depth and authenticity of female representation within the story itself.
 
-### 6.13 Trend Analysis Over Time (Percentage of Movies Passing Bechdel Test)
+### 3.10.5 Trend Analysis Over Time (Percentage of Movies Passing Bechdel Test)
 
 ```{r}
 
@@ -1005,7 +1108,7 @@ ggplotly(plot)
 
 This final graph shows that the percentage of films passing the Bechdel Test hasn't increased over time, despite growing calls for better representation. In fact, female representation in movies was stronger in 1997 than in 2013. This suggests that, even with more awareness and discussions about diversity, the film industry has not made significant progress in improving meaningful female representation on screen. In the code we removed the 1970 we did not have relevant data about that year (Information on only one movie).
 
-### 6.14 Summary of Exploratory Data Analysis
+### 3.10.6 Summary of Exploratory Data Analysis
 
 **Bechdel Test Impact**:
 
@@ -1031,15 +1134,16 @@ This final graph shows that the percentage of films passing the Bechdel Test has
 
 -   Diversity in representation boosts critical and financial success, despite disparities in gender and language.
 
-## 7. Analysis
+# 4. Analysis
 
 In the analysis phase, we aim to applie statistical models to investigate the relationships between passing the Bechdel Test and various film performance metrics. Specifically, our focus is understanding if passing the Bechdel Test significantly correlates with higher revenue, more award wins, and improved IMDb ratings. Furthermore, we want to create predictive models for estimating a film's likelihood of passing the Bechdel Test based on features like budget, genre, and director.
 
-### 7.1 General Analysis
+## 4.1 General Analysis
 
 First, let's study the relationship between the Bechdel Test and all of the various performance metrics.
 
 ```{r}
+
 # Build the logistic regression model
 logit_model <- glm(Bechdel_binary ~  Budget + 
                       + Imdb_Rating + Imdb_Votes + Genre + Wins + 
@@ -1095,57 +1199,11 @@ logit_summary %>%
 
 The logistic regression analysis identified Budget, IMDb Rating, IMDb Votes, Nominations, and Director Gender as statistically significant predictors of whether a movie passes the Bechdel test. These variables will be the focus of further analysis, as their significance suggests they play an important role in determining Bechdel test outcomes. Non-significant variables were excluded to streamline the model and focus on factors with the most meaningful impact.
 
-### 7.2 Analysis per Research Question
+## 4.2 Analysis per Research Question
 
-### 7.2.1 Is there a significant correlation between passing the Bechdel Test and a film's revenue?
+### 4.2.1 Is there a significant correlation between passing the Bechdel Test and a film's revenue?
 
 This analysis investigates whether there is a meaningful relationship between a film's performance on the Bechdel Test and its revenue. Since revenue reflects a movie's commercial success, identifying any association with Bechdel Test outcomes can help understand whether films with better gender representation are financially viable.
-
-**Analysis Plan**:
-
-1.  Calculate descriptive statistics for `Revenue` by `Bechdel_test_result`.
-
-2.  Perform a hypothesis test (e.g., ANOVA or Kruskal-Wallis test) to evaluate differences in revenue across Bechdel Test results.
-
-3.  Use correlation analysis to quantify the relationship between Bechdel results and revenue.
-
-#### 7.2.1.1 Descriptive Statistics for Revenue by Bechdel test result
-
-```{r}
-# Descriptive statistics
-revenue_stats <- df_unique %>%
-  group_by(Bechdel_test_result) %>%
-  summarise(
-    mean_revenue = mean(Revenue, na.rm = TRUE),
-    median_revenue = median(Revenue, na.rm = TRUE),
-    sd_revenue = sd(Revenue, na.rm = TRUE),
-    n = n()
-  )
-print(revenue_stats)
-
-
-
-```
-
-#### 7.2.1.2 Anova Analysis
-
-```{r}
-# Hypothesis test: ANOVA
-anova_test <- aov(Revenue ~ as.factor(Bechdel_test_result), data = df_unique)
-anova_summary <- summary(anova_test)
-print(anova_summary)
-
-# Interpretation of ANOVA results
-if (anova_summary[[1]]$`Pr(>F)`[1] < 0.05) {
-  cat("The ANOVA test indicates that there is a statistically significant difference in revenue between the Bechdel Test groups.\n")
-} else {
-  cat("The ANOVA test suggests no statistically significant difference in revenue between the Bechdel Test groups.\n")
-}
-
-
-```
-
-#### 7.2.1.3 Correlation analysis Bechdel Test and Revenue
 
 The following code performs a Pearson correlation test to determine if there is a statistically significant relationship between Bechdel_test_Result and Revenue.
 
@@ -1171,134 +1229,59 @@ The Pearson correlation test between Bechdel_test_result and Revenue yielded a c
 
 While there is a statistically significant relationship between passing the Bechdel Test and revenue, the effect size is minimal, suggesting that passing the test is not a strong predictor of a film's financial performance. This finding implies that other factors (such as budget, genre, and marketing) likely play a much more substantial role in determining a film's revenue than its performance on the Bechdel Test.
 
-### 7.2.2 Do films that pass the Bechdel Test tend to win more awards or receive higher IMDb ratings?
+### 4.2.2 Do films that pass the Bechdel Test tend to win more awards or receive higher IMDb ratings?
 
 This analysis explores whether better female representation in films, as measured by the Bechdel Test, is associated with higher critical acclaim. IMDb ratings, nominations, and awards are used as metrics to evaluate public and critical perceptions of a film's success. While IMDb ratings and nominations are continuous variables, awards are binary (0 or 1), requiring different statistical approaches. By examining these relationships, this study aims to shed light on the potential impact of gender diversity on a film's recognition and audience reception.
 
-**Analysis Plan**:
-
--   Compute summary statistics (mean, median, standard deviation, and sample size) for **IMDb_Rating** and **Nominations**, grouped by Bechdel_test_result, and calculate the proportion of films that received **awards** (Awards = 1) for each category of Bechdel_test_result.
-
--   Perform Hypotehsis tests: **For IMDb_Rating and Nominations** perform Anova Test. **For Awards** (Binary Variable): Use a **Chi-Square Test of Independence** to evaluate differences in the proportion of award-winning films between films that pass and fail the Bechdel Test.
-
--   Develop a **linear regression model** to explore the relationship between `Bechdel_test_result` and continuous variables like **IMDb_Rating** and **Nominations**. Build a **logistic regression model** to predict the likelihood of receiving awards (`Awards = 1`) based on `Bechdel_test_result`.
-
-#### 7.2.3.1 Descriptive Statistics for Imdb rating, Nominations and Awards
-
-```{r}
-# Descriptive statistics grouped by Bechdel_test_result
-descriptive_stats_Imdbrating <- df_unique %>%
-  group_by(Bechdel_test_result) %>%
-  summarise(
-    mean_imdb_rating = mean(Imdb_Rating, na.rm = TRUE),
-    median_imdb_rating = median(Imdb_Rating, na.rm = TRUE),
-    sd_imdb_rating = sd(Imdb_Rating, na.rm = TRUE),
-    n = n()
-  )
-print(descriptive_stats_Imdbrating)
-
-descriptive_statS_Nominations <- df_unique %>%
-  group_by(Bechdel_test_result) %>%
-  summarise(
-    mean_Nominations = mean(Nominations, na.rm = TRUE),
-    median_Nominations = median(Nominations , na.rm = TRUE),
-    sd_Nominations = sd(Nominations, na.rm = TRUE),
-    n = n()
-  )
-print(descriptive_statS_Nominations)
-
-# Convert Awards to numeric 
-df_unique$Awards <- as.numeric(as.character(df_unique$Awards))
-# Calculate proportions of Awards by Bechdel_test_result
-prop_awards <- df_unique %>%
-  group_by(Bechdel_test_result) %>%
-  summarise(
-    prop_awards = mean(Awards, na.rm = TRUE),  # Proportion of '1' in Awards
-    n = n()  # Number of observations per group
-  )
-
-# Display results
-print(prop_awards)
-```
-
-#### 7.2.3.2 Hypothesis Tests
-
-**(a) IMDb Ratings: ANOVA**
-
-This test checks if the mean IMDb ratings differ significantly by Bechdel_test_result.
-
-```{r}
-# ANOVA for IMDb ratings by Bechdel_test_result
-anova_imdb <- aov(Imdb_Rating ~ as.factor(Bechdel_test_result), data = df_unique)
-anova_summary_imdb <- summary(anova_imdb)
-print(anova_summary_imdb)
-
-# Interpretation of ANOVA results for IMDb ratings
-if (anova_summary_imdb[[1]]$`Pr(>F)`[1] < 0.05) {
-  cat("The ANOVA test indicates a statistically significant difference in IMDb ratings between Bechdel Test groups.\n")
-} else {
-  cat("The ANOVA test suggests no statistically significant difference in IMDb ratings between Bechdel Test groups.\n")
-}
-```
-
-**(b) Awards: Chi-Square Test for Independence**
-
-This test evaluates whether the distribution of Awards (binary) differs by Bechdel_Test_Result
-
-```{r}
-# Create a contingency table for awards and Bechdel_test_result
-contingency_table <- table(df_unique$Awards, df_unique$Bechdel_test_result)
-
-# Perform Chi-square test for independence
-chi_square_test <- chisq.test(contingency_table)
-print(chi_square_test)
-
-# Interpretation of Chi-Square results
-if (chi_square_test$p.value < 0.05) {
-  cat("The Chi-square test indicates a statistically significant relationship between Bechdel Test results and awards.\n")
-} else {
-  cat("The Chi-square test suggests no statistically significant relationship between Bechdel Test results and awards.\n")
-}
-```
-
-**(c) Nominations: ANOVA**
-
-This test checks if the mean Nominations differ significantly by Bechdel_test_result.
-
-```{r}
-# ANOVA for Nomiantions by Bechdel_test_result
-anova_Nominations <- aov(Nominations ~ as.factor(Bechdel_test_result), data = df_unique)
-anova_summary_nominations <- summary(anova_Nominations)
-print(anova_summary_nominations)
-
-# Interpretation of ANOVA results for IMDb ratings
-if (anova_summary_nominations[[1]]$`Pr(>F)`[1] < 0.05) {
-  cat("The ANOVA test indicates a statistically significant difference in Nominations between Bechdel Test groups.\n")
-} else {
-  cat("The ANOVA test suggests no statistically significant difference in Nominations between Bechdel Test groups.\n")
-}
-```
-
-#### **7.2.3.3 Logistic Regression for Awards and Linear regression for IMDb Ratings**
-
 In this section we will create some models to help us determine if passing the Bechdel Test is a predictor of critical acclaim. We will use a logistic regression for **award model and** The **imdb_rating_model** uses linear regression to estimate IMDb rating as a continuous variable
 
-```{r}
-
-# Logistic regression for binary outcome (awards)
-award_model <- glm(Awards ~ Bechdel_test_result + Budget + Genre + Imdb_Rating, data = df_unique, family = binomial)
-summary(award_model)
-
-# Linear regression for continuous IMDb ratings
-imdb_rating_model <- lm(Imdb_Rating ~ Bechdel_test_result + Budget + Genre, data = df_unique)
-summary(imdb_rating_model)
-
-# Linear regression for continuous Nominations
-Nominations_model <- lm(Awards ~ Bechdel_test_result + Budget + Genre, data = df_unique)
-summary(Nominations_model)
-```
-
 **Logistic Regression Model for Awards**
+
+```{r}
+# Fit the logistic regression model
+award_model <- glm(Awards ~ Bechdel_test_result + Budget + Genre + Imdb_Rating, 
+                   data = df_unique, 
+                   family = binomial)
+
+# Extract and format the model summary
+logistic_summary <- tidy(award_model) %>%
+  mutate(Significant = ifelse(p.value < 0.05, "Yes", "No")) %>%
+  select(
+    Term = term, 
+    Estimate = estimate, 
+    `Std. Error` = std.error, 
+    `t-value` = statistic, 
+    `p-value` = p.value, 
+    Significant
+  )
+
+
+# Extract additional model statistics (Residual Deviance and AIC)
+residual_deviance <- round(summary(award_model)$deviance, 2)
+aic <- round(AIC(award_model), 2)
+
+# Add additional statistics to the summary table with consistent data types
+extra_rows <- tibble(
+  Term = c("Residual Deviance", "AIC"),
+  Estimate = c(residual_deviance, aic),
+  `Std. Error` = c(NA_real_, NA_real_),  # Use NA_real_ for missing numeric values
+  `t-value` = c(NA_real_, NA_real_),
+  `p-value` = c(NA_real_, NA_real_),
+  Significant = c(NA_character_, NA_character_)  # Use NA_character_ for missing character values
+)
+
+# Combine the model summary with the additional rows
+logistic_summary <- bind_rows(logistic_summary, extra_rows)
+
+# Display the summary table
+logistic_summary %>%
+  mutate(across(where(is.numeric), ~ round(., 2)), # Round all numeric values to 2 decimals
+         across(everything(), ~ ifelse(is.na(.), "", .))) %>%  # Replace NA with empty strings for display
+  kable("html", caption = "Logisitc Regression Results for Awards") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed")) %>%
+  column_spec(1, bold = TRUE) %>%
+  column_spec(2:6, color = "darkblue")
+```
 
 The logistic regression model predicts the likelihood of a film winning at least one award based on its Bechdel Test result, budget, and genre.
 
@@ -1313,7 +1296,7 @@ The logistic regression model predicts the likelihood of a film winning at least
 
 **Model Fit**:
 
--   **Residual Deviance**: Lower than null deviance, suggesting that the predictors improve model performance.
+-   **Residual Deviance (1491.05)**: Lower than null deviance, suggesting that the predictors improve model performance.
 
 -   **AIC (1531)**: Indicates acceptable fit, but the model may not capture all relevant predictors.
 
@@ -1322,6 +1305,51 @@ The logistic regression model predicts the likelihood of a film winning at least
 Budget and certain genres, such as Drama, Biography, and Animation, significantly predict the likelihood of a film winning awards. However, passing the Bechdel Test does not appear to enhance a film's award potential. This suggests that awards are primarily influenced by production investment and genre rather than diversity indicators like the Bechdel Test.
 
 **Linear Regression Model for IMDb Ratings**
+
+```{r}
+# Fit the linear regression model
+imdb_rating_model <- lm(Imdb_Rating ~ Bechdel_test_result + Budget + Genre, data = df_unique)
+
+# Extract and format the model summary
+linear_summary <- tidy(imdb_rating_model) %>%
+  mutate(Significant = ifelse(p.value < 0.05, "Yes", "No")) %>%
+  select(
+    Term = term, 
+    Estimate = estimate, 
+    `Std. Error` = std.error, 
+    `t-value` = statistic, 
+    `p-value` = p.value, 
+    Significant
+  )
+
+# Extract additional model statistics (Residual Standard Error and Adjusted R-Squared)
+model_stats <- summary(imdb_rating_model)
+residual_se <- round(model_stats$sigma, 2)
+adj_r_squared <- round(model_stats$adj.r.squared, 2)
+
+# Add additional statistics to the summary table with consistent data types
+extra_rows <- tibble(
+  Term = c("Residual Standard Error", "Adjusted R-Squared"),
+  Estimate = c(residual_se, adj_r_squared),
+  `Std. Error` = c(NA_real_, NA_real_),  # Use NA_real_ for missing numeric values
+  `t-value` = c(NA_real_, NA_real_),
+  `p-value` = c(NA_real_, NA_real_),
+  Significant = c(NA_character_, NA_character_)  # Use NA_character_ for missing character values
+)
+
+# Combine the model summary with the additional rows
+linear_summary <- bind_rows(linear_summary, extra_rows)
+
+# Display the summary table
+linear_summary %>%
+  mutate(across(where(is.numeric), ~ round(., 2)), # Round all numeric values to 2 decimals
+         across(everything(), ~ ifelse(is.na(.), "", .))) %>%  # Replace NA with empty strings for display
+  kable("html", caption = "Linear Regression Results for IMDb Ratings") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed")) %>%
+  column_spec(1, bold = TRUE) %>%
+  column_spec(2:6, color = "darkblue")
+
+```
 
 The linear regression model assesses how a film's Bechdel Test result, budget, and genre are related to IMDb ratings.
 
@@ -1345,6 +1373,55 @@ The linear regression model assesses how a film's Bechdel Test result, budget, a
 Genres such as Biography, Drama, and Adventure are strong predictors of higher IMDb ratings, with passing the Bechdel Test associated with slightly lower ratings. Budget shows no significant impact. This indicates that audience ratings are more influenced by content and storytelling aspects than by gender representation metrics.
 
 **Linear Regression Model for Nominations**
+
+```{r}
+
+# Fit the linear regression model
+Nominations_model <- lm(Nominations ~ Bechdel_test_result + Budget + Genre, data = df_unique)
+
+# Extract and format the model summary
+nominations_summary <- tidy(Nominations_model) %>%
+  mutate(Significant = ifelse(p.value < 0.05, "Yes", "No")) %>%
+  select(
+    Term = term, 
+    Estimate = estimate, 
+    `Std. Error` = std.error, 
+    `t-value` = statistic, 
+    `p-value` = p.value, 
+    Significant
+  )
+
+# Extract additional statistics (Residual Standard Error, Adjusted R-Squared)
+model_stats <- summary(Nominations_model)
+residual_se <- model_stats$sigma
+adj_r_squared <- model_stats$adj.r.squared
+
+# Add additional statistics as separate rows with appropriate data types
+extra_rows <- tibble(
+  Term = c("Residual Standard Error", "Adjusted R-Squared"),
+  Estimate = round(c(residual_se, adj_r_squared), 2),  # Numeric values
+  `Std. Error` = c(NA_real_, NA_real_),  # Numeric NA for consistency
+  `t-value` = c(NA_real_, NA_real_),
+  `p-value` = c(NA_real_, NA_real_),
+  Significant = c(NA_character_, NA_character_)  # Character NA for consistency
+)
+
+# Combine original summary with additional rows
+nominations_summary <- bind_rows(nominations_summary, extra_rows)
+
+# Display the summary table
+nominations_summary %>%
+  mutate(across(where(is.numeric), ~ round(., 2)), # Round numeric columns to 2 decimals
+         across(everything(), ~ ifelse(is.na(.), "", .))) %>%  # Replace NA with empty strings
+  kable("html", caption = "Linear Regression Results for Nominations") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed")) %>%
+  column_spec(1, bold = TRUE) %>%
+  column_spec(2:6, color = "darkblue")
+
+
+
+
+```
 
 This model aims to analyze whether Bechdel Test results, budget, and genre predict the number of award nominations a film receives.
 
@@ -1374,7 +1451,7 @@ Budget and genres, especially Biography, Drama, and Adventure, strongly predict 
 
 From all three models, it is evident that budget and genre are the most influential predictors of a film's success across critical metrics such as awards, IMDb ratings, and nominations. The Bechdel Test, while an important measure of gender representation, does not show a significant direct impact on these outcomes. These findings suggest that while representation is crucial from a social and cultural perspective, its direct influence on critical acclaim and industry recognition may be more complex and nuanced. Future research could explore additional diversity measures or interactions between variables to better understand how representation contributes to a film's overall success.
 
-### 7.2.3. Can we build a predictive model to estimate a film's success (revenue, awards, IMDb ratings) based on the Bechdel test results and other factors like budget, genre, and director?
+### 4.2.3. Can we build a predictive model to estimate a film's success (revenue, awards, IMDb ratings) based on the Bechdel test results and other factors like budget, genre, and director?
 
 This objective focuses on creating a predictive model to quantify how factors such as the Bechdel Test outcome, budget, and genre influence a film's success. Success metrics like `Revenue`, `Awards`, and `Imdb_Rating` are used as dependent variables.
 
@@ -1396,12 +1473,6 @@ train_data <- df_unique[train_index, ]
 test_data <- df_unique[-train_index, ]
 
 
-# Linear Regression for Revenue 
-
-# Train linear regression model
-
-
-library(broom)
 # Build the linear regression model
 lm_model <- lm(Revenue ~ Bechdel_binary + Budget + Imdb_Votes + Nominations + Gender, data = train_data)
 
@@ -1505,7 +1576,7 @@ kable(metrics, col.names = c("Metric", "Value"), caption = "Performance Metrics 
 
 A high budget combined with a high IMDb rating are strong indicators of a film's likelihood of winning awards, as they significantly impact the model's predictions. In contrast, the Bechdel test result and the director's gender do not show a meaningful direct association with awards success. However, it is important to interpret these findings cautiously. As observed in our exploratory data analysis, male-directed movies often receive higher budgets and achieve higher IMDb ratings. This suggests that gender may indirectly influence awards outcomes through these other factors, underscoring the need for careful interpretation and further investigation into systemic biases.
 
-### 7.2.4. Can we develop a predictive model to determine whether a film will pass the Bechdel Test based on factors such as budget, genre, and director?
+### 4.2.4. Can we develop a predictive model to determine whether a film will pass the Bechdel Test based on factors such as budget, genre, and director?
 
 This question aims to predict whether a film will pass the Bechdel Test based on its features, such as `Budget`, `Genre`, and `Director's gender`. This can offer insights into factors that align with better gender representation.
 
@@ -1613,7 +1684,7 @@ kable(metrics, col.names = c("Metric", "Value"), caption = "Performance Metrics 
 
 Genre emerges as the most critical predictor across both models, with specific genres like Drama, Comedy, Biography, and Horror significantly associated with passing the test. IMDb Votes also plays a substantial role, indicating that audience engagement correlates with a higher likelihood of passing. Director gender shows moderate importance, with logistic regression suggesting that male-directed films are less likely to pass the test as shown in the EDA part. Awards, however, have minimal predictive power, showing no meaningful relationship with the Bechdel Test outcome.
 
-## 8. Conclusion
+# 5. Conclusion
 
 The results of this analysis offer valuable insights into the relationship between the Bechdel Test and various film-related factors, including revenue, awards, and IMDb ratings. Through statistical tests, predictive modeling, and data exploration, several key findings have emerged that address our project goals.
 
@@ -1625,6 +1696,6 @@ In terms of **predictive modeling**, we successfully developed models to estimat
 
 Finally, the **trend visualization** confirmed that genre, budget, and director gender are strongly associated with both Bechdel Test outcomes and economic success metrics. While films that pass the Bechdel Test often align with genres featuring diverse character interactions, their financial and critical success appears more strongly tied to production scale and audience engagement. These findings underline the importance of carefully considering contextual factors when evaluating the economic impact of female representation in film.
 
-### 8.1 Final Remarks
+## 5.1 Final Remarks
 
-While the Bechdel Test provides a useful lens for analyzing female representation, its influence on a film's economic success is intertwined with broader industry dynamics. This study highlights that gender inclusivity in films is often shaped by structural factors, such as budget allocation and genre conventions, rather than directly impacting financial performance. Future research could explore additional predictors, investigate causal pathways, and refine models to better understand the evolving relationship between gender representation and film success.
+While the Bechdel Test provides a useful lens for analyzing female representation, its influence on a film's economic success is intertwined with broader industry dynamics. This study highlights that gender inclusivity in films is often shaped by structural factors, such as budget allocation and genre conventions, rather than directly impacting financial performance. Future research could explore additional predictors, such as the impact of the director's gender, investigate causal pathways, and refine models to better understand the evolving relationship between gender and the broader film industry.
