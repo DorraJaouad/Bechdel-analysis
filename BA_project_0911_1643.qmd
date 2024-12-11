@@ -1589,7 +1589,7 @@ kable(metrics, col.names = c("Metric", "Value"), caption = "Performance Metrics 
   column_spec(2, color = "darkblue") 
 ```
 
--   The model performance of the random forest for awards has an **accuracy of** 78% but the **sensitivity** is at 29%, meaning the model struggles to identify films that don't win awards. This can be explain by the asymmetry between the number of movies that have received awards (79.26%) and the one that didn't (20.21%).
+-   The model performance of the random forest for awards has an **accuracy of** 78% but the **sensitivity** is at 29%, meaning the model struggles to identify films that win awards. This can be explain by the asymmetry between the number of movies that have received awards (79.26%) and the one that didn't (20.21%).
 
 -   The random forest classification offer us insight in the importance of the different variables: **MDb Rating:** The most important predictor, contributing significantly to model accuracy (%IncMSE = 40.95) and **Budget** The second most important variable (%IncMSE =15.02)
 
@@ -1699,7 +1699,7 @@ kable(metrics, col.names = c("Metric", "Value"), caption = "Performance Metrics 
 
 ```
 
--   The Random Forest model demonstrates an accuracy of **61%**, indicating that it correctly predicts the Bechdel binary outcome in 61% of cases. The sensitivity is **72%**, meaning it effectively identifies positive cases, while the specificity is **47%**, reflecting a lower ability to correctly classify negative cases.
+-   The Random Forest model demonstrates an accuracy of **61%**, indicating that it correctly predicts the Bechdel binary outcome in 61% of cases. The sensitivity is **72%**, meaning it effectively identifies positive cases, while the specificity is **46%**, reflecting a lower ability to correctly classify negative cases, meaning movies that do not pass the test.
 
 **Conclusion**
 
