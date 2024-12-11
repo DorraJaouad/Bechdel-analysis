@@ -81,6 +81,7 @@ library(caret)
 library(pROC)
 library(randomForest)
 library(broom)
+library(caret)
 ```
 
 ```{r}
@@ -490,8 +491,6 @@ numerical_summary_table <- datatable(numerical_summary_df, options = list(pageLe
 # Print the interactive table
 numerical_summary_table
 ```
-
-### 
 
 ## 3.2 Correlation Heatmap
 
@@ -1182,6 +1181,7 @@ logit_model <- glm(Bechdel_binary ~ Budget +
 # Extract meaningful results and filter significant rows
 logit_summary <- tidy(logit_model) %>%
   mutate(Significant = ifelse(p.value < 0.05, "Yes", "No")) %>%
+  filter(Significant == "Yes") %>%
   select(
     Term = term, 
     Estimate = estimate, 
@@ -1214,7 +1214,26 @@ df_unique$Revenue <- as.numeric(df_unique$Revenue)
 
 # Perform correlation test again
 correlation_test <- cor.test(df_unique$Bechdel_test_result, df_unique$Revenue, method = "pearson")
-print(correlation_test)
+
+
+# Extract results into a data frame
+results_table <- data.frame(
+  Metric = c("Correlation Coefficient", "P-Value", "T Statistic", "Degrees of Freedom", "95% Confidence Interval (Lower)", "95% Confidence Interval (Upper)"),
+  Value = c(
+    correlation_test$estimate,
+    correlation_test$p.value,
+    correlation_test$statistic,
+    correlation_test$parameter,
+    correlation_test$conf.int[1],
+    correlation_test$conf.int[2]
+  )
+)
+
+# Print a beautiful table with kableExtra
+results_table %>%
+  kbl(caption = "Results of Pearson Correlation Test between Bechdel Test Results and Revenue") %>%
+  kable_styling(full_width = F, bootstrap_options = c("striped", "hover", "condensed")) %>%
+  column_spec(2, bold = T)
 ```
 
 The Pearson correlation test between Bechdel_test_result and Revenue yielded a correlation coefficient of approximately -0.095, with a p-value of 8.532e-05. This result indicates a small but statistically significant negative correlation between passing the Bechdel Test and revenue. The 95% confidence interval for this correlation ranges from -0.141 to -0.048, suggesting that the true correlation is likely weakly negative.
@@ -1427,9 +1446,9 @@ This model aims to analyze whether Bechdel Test results, budget, and genre predi
 
 **Key Findings**:
 
-1.  **Budget**: Strong and significant positive effect (p\<0.001p \< 0.001p\<0.001), showing that higher budgets are associated with more nominations.
+1.  **Budget**: Strong and significant positive effect (p\<0.001), showing that higher budgets are associated with more nominations.
 
-2.  **Bechdel Test**: Not significant (p=0.63p = 0.63p=0.63), suggesting no direct influence on nominations.
+2.  **Bechdel Test**: Not significant (p=0.63), suggesting no direct influence on nominations.
 
 3.  **Genres**:
 
@@ -1457,7 +1476,7 @@ This objective focuses on creating a predictive model to quantify how factors su
 
 **Utility:**
 
-We created a model to predict in advance the award winning potential of a movie. This model aims to guide studios and producers, marketing agencies in their investments in films. You can find it in teh following link: [Movie Awards Predictor](https://684o3y-dorra.shinyapps.io/bechdel-app/)
+We created a model to predict in advance the award winning potential of a movie. This model aims to guide studios and producers, marketing agencies in their investments in films. You can find it in the following link: [Movie Awards Predictor](https://684o3y-dorra.shinyapps.io/bechdel-app/)
 
 **Analysis Plan**:
 
@@ -1468,9 +1487,9 @@ We created a model to predict in advance the award winning potential of a movie.
 ```{r}
 # Split data into training and testing sets 
 set.seed(123)  # For reproducibility
-train_index <- sample(1:nrow(df_unique), 0.7 * nrow(df_unique))  # 70% for training
-train_data <- df_unique[train_index, ]
-test_data <- df_unique[-train_index, ]
+train_index <- sample(1:nrow(df_gender), 0.7 * nrow(df_gender))  # 70% for training
+train_data <- df_gender[train_index, ]
+test_data <- df_gender[-train_index, ]
 
 
 # Build the linear regression model
@@ -1489,12 +1508,12 @@ logit_summary <- tidy(lm_model) %>%
   )
 
 
-# Print as a nice table
 logit_summary %>%
-  kable("html", caption = "Linear Regression Results for revenue") %>%
+  mutate(across(where(is.numeric), ~ round(., 2))) %>%
+  kable("html", caption = "Linear Regression Results for Revenue") %>%
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
 
-# Evaluate linear regression
+# Evaluate the linear regression model
 predictions <- predict(lm_model, test_data)
 actuals <- test_data$Revenue
 
@@ -1513,23 +1532,24 @@ train_data$Awards <- as.factor(train_data$Awards)
 
 
 # Fit the Random Forest model with importance=TRUE
-rf_model <- randomForest(Awards ~ Bechdel_binary + Budget + Imdb_Rating + Gender, 
+rf_model_Awards <- randomForest(Awards ~ Bechdel_binary + Budget + Imdb_Rating + Gender, 
                          data = train_data, 
                          importance = TRUE)
 
 # Extract variable importance
-rf_summary <- as.data.frame(importance(rf_model)) %>%
+rf_summary <- as.data.frame(importance(rf_model_Awards)) %>%
   rownames_to_column(var = "Term") %>%
   mutate(Significant = ifelse(MeanDecreaseGini > mean(MeanDecreaseGini), "Yes", "No")) %>%
   select(
     Term, 
     `Mean Decrease Accuracy` = MeanDecreaseAccuracy, 
-    `Mean Decrease Gini` = MeanDecreaseGini, 
+    `Mean Decrease Gini` = MeanDecreaseGini,  
     Significant
   )
 
 # Display the summary using kable
 rf_summary %>%
+  mutate(across(where(is.numeric), ~ round(., 2))) %>%
   kable("html", caption = "Random Forest Variable Importance") %>%
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
 
@@ -1545,7 +1565,7 @@ We added a confusion matrix to evaluate the **accuracy** of the model along with
 
 ```{r}
 # Predict on test data
-rf_predictions <- predict(rf_model, test_data)
+rf_predictions <- predict(rf_model_Awards, test_data)
 
 # Confusion matrix for Random Forest
 cm <- confusionMatrix(rf_predictions, as.factor(test_data$Awards))
@@ -1563,12 +1583,13 @@ metrics <- data.frame(
 
 # Generate and style the table with kableExtra
 kable(metrics, col.names = c("Metric", "Value"), caption = "Performance Metrics for Random Forest for Awards") %>%
+  
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed")) %>%
   column_spec(1, bold = TRUE, border_right = TRUE) %>%
-  column_spec(2, color = "darkblue")
+  column_spec(2, color = "darkblue") 
 ```
 
--   The model performance of the random forest for awards has an **accuracy of** 76% but the **Sensitivity is low (**32%), meaning the model struggles to identify films that don't win awards. This can be explain by the asymmetry between the number of movies that have received awards (79.26%) and the one that didn't (20.21%).
+-   The model performance of the random forest for awards has an **accuracy of** 78% but the **sensitivity** is at 29%, meaning the model struggles to identify films that don't win awards. This can be explain by the asymmetry between the number of movies that have received awards (79.26%) and the one that didn't (20.21%).
 
 -   The random forest classification offer us insight in the importance of the different variables: **MDb Rating:** The most important predictor, contributing significantly to model accuracy (%IncMSE = 40.95) and **Budget** The second most important variable (%IncMSE =15.02)
 
